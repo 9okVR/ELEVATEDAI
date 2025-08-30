@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '../services/supabaseClient';
+import { saveUserApiKey } from '../services/proxyService';
 import { useSettings, FontSize, ColorScheme, LayoutMode } from '../contexts/SettingsContext';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -7,7 +9,7 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-type TabType = 'appearance' | 'layout' | 'advanced';
+type TabType = 'appearance' | 'layout' | 'advanced' | 'account';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [show, setShow] = useState(false);
@@ -15,6 +17,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<TabType>('appearance');
   const [previewMode, setPreviewMode] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [accountMsg, setAccountMsg] = useState<string | null>(null);
   
   const { 
     fontSize, setFontSize, 
@@ -35,6 +42,22 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
+
+  // Supabase session tracking
+  useEffect(() => {
+    let unsub: (() => void) | undefined;
+    const init = async () => {
+      if (!supabase) return;
+      const { data } = await supabase.auth.getSession();
+      setSessionEmail(data.session?.user?.email ?? null);
+      const sub = supabase.auth.onAuthStateChange((_evt, sess) => {
+        setSessionEmail(sess?.user?.email ?? null);
+      });
+      unsub = sub.data.subscription.unsubscribe;
+    };
+    init();
+    return () => { try { unsub && unsub(); } catch {} };
+  }, []);
 
   // Enhanced keyboard navigation
   useEffect(() => {
@@ -296,6 +319,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 }
                 isActive={activeTab === 'advanced'}
               />
+              <TabButton 
+                tab="account" 
+                label="Account"
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A10.97 10.97 0 0112 15c2.5 0 4.847.858 6.879 2.304M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                }
+                isActive={activeTab === 'account'}
+              />
             </div>
           </div>
 
@@ -519,6 +552,88 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     Advanced features like custom themes, animations preferences, and accessibility options will be available in future updates.
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'account' && (
+              <div className="space-y-6">
+                <h3 className="text-2xl font-bold text-white mb-2">Account</h3>
+                {sessionEmail ? (
+                  <div className="space-y-4">
+                    <p className="text-white/80">Signed in as <span className="font-semibold">{sessionEmail}</span></p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="password"
+                        value={apiKeyInput}
+                        onChange={(e) => setApiKeyInput(e.target.value)}
+                        placeholder="Enter your Gemini API Key"
+                        className="flex-1 bg-white/5 text-white placeholder-white/40 px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                      />
+                      <button
+                        onClick={async () => {
+                          setAccountMsg(null);
+                          const res = await saveUserApiKey(apiKeyInput.trim());
+                          setAccountMsg(res.ok ? 'API key saved to your account' : `Failed to save: ${res.error}`);
+                        }}
+                        className="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold"
+                      >
+                        Save Key
+                      </button>
+                      <button
+                        onClick={async () => { try { await supabase?.auth.signOut(); setApiKeyInput(''); setAccountMsg('Signed out'); } catch {} }}
+                        className="px-4 py-3 rounded-xl bg-white/10 text-white/80 hover:bg-white/20"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                    {accountMsg && <p className="text-sm text-purple-300">{accountMsg}</p>}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-white/80">Sign in to use your own API key and get usage logging.</p>
+                    <input
+                      type="email"
+                      value={authEmail}
+                      onChange={(e) => setAuthEmail(e.target.value)}
+                      placeholder="Email"
+                      className="w-full bg-white/5 text-white placeholder-white/40 px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                    />
+                    <input
+                      type="password"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                      placeholder="Password"
+                      className="w-full bg-white/5 text-white placeholder-white/40 px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={async () => {
+                          setAccountMsg(null);
+                          try {
+                            const { error } = await supabase!.auth.signInWithPassword({ email: authEmail, password: authPassword });
+                            setAccountMsg(error ? error.message : 'Signed in');
+                          } catch (e) {
+                            setAccountMsg('Sign in failed');
+                          }
+                        }}
+                        className="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold"
+                      >Sign In</button>
+                      <button
+                        onClick={async () => {
+                          setAccountMsg(null);
+                          try {
+                            const { error } = await supabase!.auth.signUp({ email: authEmail, password: authPassword });
+                            setAccountMsg(error ? error.message : 'Check your email to confirm sign up');
+                          } catch (e) {
+                            setAccountMsg('Sign up failed');
+                          }
+                        }}
+                        className="px-4 py-3 rounded-xl bg-white/10 text-white/80 hover:bg-white/20"
+                      >Sign Up</button>
+                    </div>
+                    {accountMsg && <p className="text-sm text-purple-300">{accountMsg}</p>}
+                  </div>
+                )}
               </div>
             )}
           </div>

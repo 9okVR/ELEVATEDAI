@@ -1,6 +1,7 @@
 // Enhanced AI service with actual Gemini 2.5 Pro API integration
 // Includes code execution, Google Search, and thinking capabilities
 import type { GradeLevel, WebSource, Message, StudyDocument, Flashcard, QuizQuestion, AiModel } from '../types';
+import { canUseProxy, proxyGenerate } from './proxyService';
 import { AI_MODELS } from "../constants";
 
 export class SafetyError extends Error {
@@ -68,10 +69,81 @@ const initializeGeminiClient = async () => {
   }
 };
 
+// Attempt to robustly extract a JSON array from a free-form model response
+function extractJsonArray<T = any>(text: string): T[] | null {
+  if (!text) return null;
+  let candidate = text.trim();
+
+  // Remove common code fences
+  if (candidate.startsWith('```')) {
+    candidate = candidate.replace(/^```[a-zA-Z]*\s*/m, '');
+    candidate = candidate.replace(/```\s*$/m, '');
+  }
+
+  const tryParse = (s: string) => {
+    try {
+      const v = JSON.parse(s);
+      return Array.isArray(v) ? v : null;
+    } catch {
+      return null;
+    }
+  };
+
+  // Direct parse
+  let parsed = tryParse(candidate);
+  if (parsed) return parsed as T[];
+
+  // Normalize smart quotes
+  candidate = candidate
+    .replace(/[\u201C-\u201F\u2033]/g, '"')
+    .replace(/[\u2018-\u201B\u2032]/g, "'");
+
+  parsed = tryParse(candidate);
+  if (parsed) return parsed as T[];
+
+  // Extract first balanced [...] block
+  const start = candidate.indexOf('[');
+  if (start !== -1) {
+    let depth = 0;
+    for (let i = start; i < candidate.length; i++) {
+      const ch = candidate[i];
+      if (ch === '[') depth++;
+      else if (ch === ']') {
+        depth--;
+        if (depth === 0) {
+          let slice = candidate.slice(start, i + 1);
+
+          // Attempt direct parse
+          let arr = tryParse(slice);
+          if (arr) return arr as T[];
+
+          // Remove code fences if present anywhere
+          slice = slice.replace(/```/g, '');
+
+          // Remove trailing commas before } or ]
+          slice = slice.replace(/,\s*(\}|\])/g, '$1');
+
+          // Ensure object keys are quoted
+          slice = slice.replace(/([\{,]\s*)([A-Za-z0-9_]+)\s*:/g, '$1"$2":');
+
+          // Replace single-quoted strings with double quotes
+          slice = slice.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (m, g1) => '"' + g1.replace(/"/g, '\\"') + '"');
+
+          arr = tryParse(slice);
+          if (arr) return arr as T[];
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
 // Real Gemini API call with simplified error handling
 const callGeminiAPI = async (
   prompt: string,
-  config: EnhancedAIConfig = DEFAULT_AI_CONFIG
+  config: EnhancedAIConfig = DEFAULT_AI_CONFIG,
+  responseMimeType?: string
 ): Promise<{ text: string; sources: WebSource[] | null }> => {
   console.log('🔄 Starting callGeminiAPI...');
   
@@ -95,6 +167,7 @@ const callGeminiAPI = async (
       generationConfig: {
         temperature: 0.7,  // Lower temperature for more reliable responses
         maxOutputTokens: 2048,  // Reduced token limit
+        ...(responseMimeType ? { responseMimeType } : {}) as any,
       }
     });
 
@@ -156,6 +229,7 @@ const callGeminiAPI = async (
   }
 };
 
+// Gemini API call with automatic fallback across several model names.
 // Universal AI API call that routes to the appropriate provider
 const callAI = async (
   prompt: string,
@@ -468,40 +542,37 @@ export const sendMessage = async (
   console.log('📄 Documents:', documents.length, 'documents');
   console.log('🎓 Grade level:', gradeLevel);
   console.log('🗨️ New message:', newMessage.substring(0, 100) + '...');
-  
-  if (documents.length === 0) {
-    return {
-      text: "I don't have any study materials to reference. Please upload your documents first.",
-      sources: null
-    };
-  }
+  // Allow conversation even without study materials; we'll prioritize them if present.
   
   try {
     // Create simple context from documents
-    const documentsText = documents.map(doc => 
-      `${doc.name}: ${doc.content.substring(0, 1000)}...`
-    ).join('\n\n');
+    const documentsText = documents.length > 0
+      ? documents.map(doc => `${doc.name}: ${doc.content.substring(0, 1000)}...`).join('\n\n')
+      : '(no study materials provided)';
 
     // Create simple conversation history
     const conversationHistory = history.slice(-5).map(msg => 
       `${msg.role}: ${msg.text.substring(0, 200)}...`
     ).join('\n');
 
-    const prompt = `You are a ${gradeLevel}th grade tutor. Answer the student's question using ONLY the study materials provided below.
+    const prompt = `You are a patient, helpful ${gradeLevel}th-grade tutor.
 
-**STRICT RULE**: You can ONLY use information from these study materials. You CANNOT use external knowledge, general facts, or information from your training.
-
-Student's Study Materials:
+Student's Study Materials (use these first if relevant):
 ${documentsText}
 
-Conversation History:
+Recent Conversation:
 ${conversationHistory}
 
-Student Question: ${newMessage}
+Student Question:
+${newMessage}
 
-**Instructions**: If the answer is not in the study materials, say "I can only help with information from your study materials. I don't see information about that topic in what you've uploaded." DO NOT add any introductory phrases about using only the provided materials. Just provide a direct answer.
+Instructions:
+- If the materials clearly contain the answer, use them and explain simply.
+- If the materials do not cover the question (or only partially), answer helpfully using your general knowledge.
+- When you go beyond the materials, briefly mention that you are extending beyond the uploaded content.
+- Keep the tone supportive and concise; avoid unnecessary disclaimers.
 
-Tutor Response (based ONLY on the materials):`;
+Tutor Response:`;
 
     console.log('📝 Chat prompt length:', prompt.length, 'characters');
     console.log('📤 Making chat API call...');
@@ -543,9 +614,9 @@ export const generateFlashcards = async (
   const prompt = buildPromptWithDocuments(
     documents,
     gradeLevel,
-    `Generate exactly ${numFlashcards} flashcards using ONLY information from the provided study materials. Do NOT use external knowledge. Each flashcard must be based on content explicitly found in the materials.
+    `Generate exactly ${numFlashcards} flashcards. Use the study materials as the primary source; if they don't fully cover a topic, you may use accurate, widely taught knowledge appropriate for ${gradeLevel}th grade.
 
-Format as a JSON array with objects containing "term" and "definition" fields. Make sure definitions are appropriate for ${gradeLevel}th grade level and come directly from the study materials.
+Respond with pure JSON only — no markdown, no code fences, no commentary. Format strictly as a JSON array of objects with keys "term" (string) and "definition" (string). Keep definitions clear, concise, and suitable for ${gradeLevel}th grade.
 
 Example format:
 [
@@ -553,18 +624,91 @@ Example format:
   {"term": "Another Term", "definition": "Another definition from the materials"}
 ]
 
-Only return the JSON array, no other text. DO NOT add any introductory phrases or explanations.`
+Only return the JSON array, no other text. Do not add explanations, notes, disclaimers, or code fences.`
   );
   
   try {
+    // Prefer server proxy if user is signed in (per-user key + logging)
+    const modelName = getModelInfo(modelId)?.modelName || modelId;
+    if (canUseProxy()) {
+      onProgress('Generating flashcards with your account...');
+      const proxied = await proxyGenerate({
+        prompt,
+        model: modelName,
+        expectJson: true,
+        action: 'flashcards',
+        items: numFlashcards,
+        docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0)
+      });
+      if (proxied.ok && proxied.text) {
+        let fc = extractJsonArray<Flashcard>(proxied.text);
+        if (fc && fc.length > 0) return fc.slice(0, numFlashcards);
+        // Try conversion via proxy
+        onProgress('Formatting results...');
+        const conv = await proxyGenerate({
+          prompt: `Convert the following content to a JSON array of objects with strictly these keys: "term" (string) and "definition" (string). Only output the JSON array.\n\nCONTENT:\n${proxied.text}`,
+          model: modelName,
+          expectJson: true,
+          action: 'flashcards'
+        });
+        if (conv.ok && conv.text) {
+          fc = extractJsonArray<Flashcard>(conv.text);
+          if (fc && fc.length > 0) return fc.slice(0, numFlashcards);
+        }
+      }
+    }
+
     onProgress('Generating flashcards with AI...');
+    // Attempt 1: standard call (no JSON mode), then parse flexibly
     const response = await callGeminiAPI(prompt, { ...DEFAULT_AI_CONFIG, model: modelId });
-    
-    // Try to parse JSON response
-    const jsonMatch = response.text.match(/\[([\s\S]*?)\]/);
-    if (jsonMatch) {
-      const flashcards = JSON.parse(jsonMatch[0]);
+    let flashcards = extractJsonArray<Flashcard>(response.text);
+    if (flashcards && flashcards.length > 0) {
       return flashcards.slice(0, numFlashcards);
+    }
+    
+    // Attempt 1b: ask for a compact, line-delimited format and parse it
+    onProgress('Refining format...');
+    const compactPrompt = buildPromptWithDocuments(
+      documents,
+      gradeLevel,
+      `Return exactly ${numFlashcards} flashcards as ${numFlashcards} separate lines.\n\nEach line must be: term || definition\n- Use the double pipe "||" as the only delimiter\n- No numbering, no bullets, no code fences, no extra text\n- Keep definitions concise and ${gradeLevel}th-grade appropriate`
+    );
+    const compactResp = await callGeminiAPI(compactPrompt, { ...DEFAULT_AI_CONFIG, model: modelId });
+    const lines = compactResp.text
+      .split(/\r?\n/)
+      .map(l => l.trim())
+      .filter(l => l.length > 0 && l.includes('||'));
+    if (lines.length > 0) {
+      const parsedPairs: Flashcard[] = lines.map(l => {
+        const idx = l.indexOf('||');
+        const term = l.substring(0, idx).trim().replace(/^[-*\d\.\)\s]+/, '');
+        const definition = l.substring(idx + 2).trim();
+        return { term, definition } as Flashcard;
+      }).filter(c => c.term && c.definition);
+      if (parsedPairs.length > 0) {
+        return parsedPairs.slice(0, numFlashcards);
+      }
+    }
+    
+    // Attempt 2: ask model to convert to JSON strictly, then parse
+    onProgress('Formatting results...');
+    const convertPrompt = `Convert the following content to a JSON array of objects with strictly these keys: "term" (string) and "definition" (string). Do not include any extra keys or wrapper objects. Only output the JSON array, nothing else.\n\nCONTENT:\n${response.text}`;
+    const normalized = await callGeminiAPI(convertPrompt, { ...DEFAULT_AI_CONFIG, model: modelId });
+    flashcards = extractJsonArray<Flashcard>(normalized.text);
+    if (flashcards && flashcards.length > 0) {
+      return flashcards.slice(0, numFlashcards);
+    }
+    
+    // Third attempt: generate free-form, then convert to JSON
+    onProgress('Formatting results...');
+    const freeform = await callAI(prompt, modelId);
+    if (freeform.text) {
+      const convertPrompt = `Convert the following content to a JSON array of objects with strictly these keys: "term" (string) and "definition" (string). Do not include any extra keys or wrapper objects. Only output the JSON array, nothing else.\n\nCONTENT:\n${freeform.text}`;
+      const normalized = await callGeminiAPI(convertPrompt, { ...DEFAULT_AI_CONFIG, model: modelId }, 'application/json');
+      const converted = extractJsonArray<Flashcard>(normalized.text);
+      if (converted && converted.length > 0) {
+        return converted.slice(0, numFlashcards);
+      }
     }
     
     // Fallback if JSON parsing fails
@@ -587,9 +731,9 @@ export const generateQuiz = async (
   const prompt = buildPromptWithDocuments(
     documents,
     gradeLevel,
-    `Generate exactly ${numQuestions} multiple choice quiz questions using ONLY information from the provided study materials. Do NOT use external knowledge or general facts.
+    `Generate exactly ${numQuestions} multiple choice quiz questions. Use the study materials as the primary source; if they don't fully cover a topic, you may use accurate, widely taught knowledge appropriate for ${gradeLevel}th grade.
 
-All questions must be answerable from the study materials provided. Format as a JSON array with objects containing "question", "options" (array of 4 choices), "correctAnswer", and "explanation" fields. Make questions appropriate for ${gradeLevel}th grade level.
+Format strictly as a JSON array with objects containing "question", "options" (array of 4 choices), "correctAnswer", and "explanation" fields. Make questions appropriate for ${gradeLevel}th grade level and ensure clarity. Respond with pure JSON only — no markdown, no code fences, no commentary.
 
 Example format:
 [
@@ -601,18 +745,65 @@ Example format:
   }
 ]
 
-Only return the JSON array, no other text. DO NOT add any introductory phrases or explanations.`
+Only return the JSON array, no other text. Do not add explanations, notes, disclaimers, or code fences.`
   );
   
   try {
+    const modelName = getModelInfo(modelId)?.modelName || modelId;
+    if (canUseProxy()) {
+      onProgress('Creating quiz with your account...');
+      const proxied = await proxyGenerate({
+        prompt,
+        model: modelName,
+        expectJson: true,
+        action: 'quiz',
+        items: numQuestions,
+        docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0)
+      });
+      if (proxied.ok && proxied.text) {
+        let qq = extractJsonArray<QuizQuestion>(proxied.text);
+        if (qq && qq.length > 0) return qq.slice(0, numQuestions);
+        onProgress('Formatting results...');
+        const conv = await proxyGenerate({
+          prompt: `Convert the following content to a JSON array of quiz questions with strictly these keys: "question" (string), "options" (array of 4 strings), "correctAnswer" (string equal to one of the options), and "explanation" (string). Only output the JSON array.\n\nCONTENT:\n${proxied.text}`,
+          model: modelName,
+          expectJson: true,
+          action: 'quiz'
+        });
+        if (conv.ok && conv.text) {
+          qq = extractJsonArray<QuizQuestion>(conv.text);
+          if (qq && qq.length > 0) return qq.slice(0, numQuestions);
+        }
+      }
+    }
+
     onProgress('Creating quiz with AI...');
+    // Attempt 1: standard call (no JSON mode), then parse flexibly
     const response = await callGeminiAPI(prompt, { ...DEFAULT_AI_CONFIG, model: modelId });
-    
-    // Try to parse JSON response
-    const jsonMatch = response.text.match(/\[([\s\S]*?)\]/);
-    if (jsonMatch) {
-      const questions = JSON.parse(jsonMatch[0]);
+    let questions = extractJsonArray<QuizQuestion>(response.text);
+    if (questions && questions.length > 0) {
       return questions.slice(0, numQuestions);
+    }
+    
+    // Attempt 2: ask model to convert to strict JSON array, then parse
+    onProgress('Formatting results...');
+    const convertPrompt = `Convert the following content to a JSON array of quiz questions with strictly these keys: "question" (string), "options" (array of 4 strings), "correctAnswer" (string equal to one of the options), and "explanation" (string). Only output the JSON array, nothing else.\n\nCONTENT:\n${response.text}`;
+    const normalized = await callGeminiAPI(convertPrompt, { ...DEFAULT_AI_CONFIG, model: modelId });
+    questions = extractJsonArray<QuizQuestion>(normalized.text);
+    if (questions && questions.length > 0) {
+      return questions.slice(0, numQuestions);
+    }
+    
+    // Third attempt: generate free-form, then convert to JSON
+    onProgress('Formatting results...');
+    const freeform = await callAI(prompt, modelId);
+    if (freeform.text) {
+      const convertPrompt = `Convert the following content to a JSON array of quiz questions with strictly these keys: "question" (string), "options" (array of 4 strings), "correctAnswer" (string equal to one of the options), and "explanation" (string). Only output the JSON array, nothing else.\n\nCONTENT:\n${freeform.text}`;
+      const normalized = await callGeminiAPI(convertPrompt, { ...DEFAULT_AI_CONFIG, model: modelId }, 'application/json');
+      const converted = extractJsonArray<QuizQuestion>(normalized.text);
+      if (converted && converted.length > 0) {
+        return converted.slice(0, numQuestions);
+      }
     }
     
     // Fallback if JSON parsing fails
@@ -640,9 +831,7 @@ export const analyzeQuizResults = async (
   const score = results.filter(r => r.isCorrect).length;
   const total = quiz.length;
   
-  const prompt = `You are an AI tutor analyzing a student's quiz performance. You can ONLY reference information from the student's study materials.
-
-**STRICT RULE**: Base your analysis and recommendations ONLY on the study materials provided. Do NOT suggest external resources or general study tips not related to their specific materials.
+  const prompt = `You are an AI tutor analyzing a student's quiz performance. Use the student's study materials as the primary source. If the materials do not fully cover a needed concept, provide helpful general guidance appropriate for their grade level.
 
 **Student Grade Level**: ${gradeLevel}th Grade
 **Quiz Results**: ${score}/${total} correct
@@ -658,7 +847,7 @@ ${results.map(r => `Q: ${r.question}\nCorrect: ${r.correct}\nStudent: ${r.userAn
 - Specific study recommendations focusing on reviewing sections from their uploaded materials
 - Encouraging feedback appropriate for ${gradeLevel}th grade
 
-Only reference concepts and topics that appear in their study materials. Format in clear text. DO NOT add any introductory phrases about using only the provided materials. Just provide a direct analysis.`;
+Prioritize referencing concepts and topics that appear in their study materials. If you extend beyond the materials, keep it concise and relevant. Format in clear text and provide a direct analysis.`;
   
   try {
     const response = await callGeminiAPI(prompt, { ...DEFAULT_AI_CONFIG, model: modelId });
@@ -840,3 +1029,6 @@ export const testGeminiConnection = async (): Promise<{ success: boolean; messag
     };
   }
 };
+
+
+
