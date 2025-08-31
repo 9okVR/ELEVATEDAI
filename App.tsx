@@ -629,7 +629,7 @@ const AppContent: React.FC = () => {
           </div>
       </button>
 
-      <div className="container mx-auto max-w-7xl relative z-10 px-2 sm:px-4">
+      <div className="container mx-auto max-w-7xl relative z-30 px-2 sm:px-4">
         {/* Desktop top bar (scrolls with page) */}
         <div className="hidden sm:flex items-center justify-between py-2">
           <div />
@@ -655,7 +655,7 @@ const AppContent: React.FC = () => {
         </div>
         <div className="lg:flex lg:flex-col lg:justify-center lg:min-h-screen">
             <header 
-              className="text-center mb-8 sm:mb-12 animate-entry"
+              className="relative z-30 text-center mb-8 sm:mb-12 animate-entry"
               style={{ animationDelay: '0.2s' }}
             >
               <div className="inline-flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
@@ -1063,12 +1063,14 @@ const AppContent: React.FC = () => {
           block-size: 100%;
           overflow: hidden;
           z-index: 0;
+          pointer-events: none;
         }
         .aurora-shape {
           position: absolute;
           border-radius: 50%;
           filter: blur(100px);
           opacity: 0.3;
+          pointer-events: none;
         }
         .aurora-shape-1 {
           inline-size: 500px;
