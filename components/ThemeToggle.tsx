@@ -7,7 +7,7 @@ const ThemeToggle: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
+    <div className="fixed top-4 left-4 sm:left-auto sm:right-4 z-70 flex items-center gap-3">
       {/* Beta Badge */}
       <div className="relative group">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/30 to-pink-500/30 blur-lg rounded-full animate-pulse"></div>

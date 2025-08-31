@@ -469,23 +469,9 @@ const AppContent: React.FC = () => {
 
       {/* Mobile Compact Header */}
       <div className="sm:hidden sticky top-0 z-60 -mx-2 px-3 py-2 bg-black/30 backdrop-blur-md border-b border-white/10 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsBetaModalOpen(true)}
-            className="text-[11px] font-semibold text-purple-300 bg-white/10 border border-white/10 px-2 py-1 rounded-full"
-            aria-label="Beta information"
-            title="Beta | 2.5v"
-          >
-            Beta | 2.5v
-          </button>
-          <button
-            onClick={() => { try { toggleTheme(); } catch {} }}
-            className="p-2 rounded-lg bg-white/10 border border-white/10 text-white/80 hover:bg-white/20"
-            aria-label="Toggle theme"
-            title="Toggle theme"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0-1.414 1.414M7.05 16.95l-1.414 1.414"/></svg>
-          </button>
+        <div className="flex items-center gap-2">
+          <ElevatedAILogo className="w-6 h-6" showText={false} />
+          <span className="text-white font-semibold">Elevated AI</span>
         </div>
         <div className="flex items-center gap-2">
           <button
