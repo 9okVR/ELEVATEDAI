@@ -38,6 +38,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   const [fontSize, setFontSizeState] = useState<FontSize>(defaultSettings.fontSize);
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>(defaultSettings.colorScheme);
   const [layoutMode, setLayoutModeState] = useState<LayoutMode>(defaultSettings.layoutMode);
+  const [loadedFromStorage, setLoadedFromStorage] = useState(false);
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -48,11 +49,29 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
         setFontSizeState(parsed.fontSize || defaultSettings.fontSize);
         setColorSchemeState(parsed.colorScheme || defaultSettings.colorScheme);
         setLayoutModeState(parsed.layoutMode || defaultSettings.layoutMode);
+        setLoadedFromStorage(true);
       } catch (error) {
         console.warn('Failed to parse saved settings, using defaults');
       }
     }
   }, []);
+
+  // If no saved settings and on a small screen, make defaults roomier for mobile users
+  useEffect(() => {
+    if (!loadedFromStorage) {
+      try {
+        const isSmallScreen = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
+        if (isSmallScreen) {
+          // Use smaller base font to fit more, and comfortable spacing for readability
+          setFontSize('small');
+          setLayoutMode('comfortable');
+        }
+      } catch {
+        // noop
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedFromStorage]);
 
   // Save settings to localStorage whenever they change
   const saveSettings = (newSettings: Partial<typeof defaultSettings>) => {

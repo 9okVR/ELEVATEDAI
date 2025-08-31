@@ -438,29 +438,25 @@ const AppContent: React.FC = () => {
         <SettingsIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-300" />
       </button>
 
-      {/* Import/Export Button */}
+      {/* Import/Export Button (hidden on small screens) */}
       <button
         onClick={() => setIsImportExportModalOpen(true)}
-        className="fixed top-16 sm:top-20 left-2 sm:left-4 z-50 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+        className="hidden sm:flex fixed top-16 sm:top-20 left-2 sm:left-4 z-50 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
         aria-label="Import/Export data"
         title="Import & Export"
       >
         <DownloadIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-300" />
       </button>
 
-      {/* AI Info Button */}
+      {/* AI Info Button (hidden on small screens) */}
       <button
         onClick={() => setIsAIInfoModalOpen(true)}
-        className="fixed top-2 sm:top-4 right-2 sm:right-4 z-50 p-2 sm:p-3 bg-gradient-to-br from-purple-600/20 to-indigo-600/20 backdrop-blur-sm border border-purple-400/30 rounded-full shadow-lg hover:bg-purple-600/30 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 group min-h-[44px] min-w-[44px] flex items-center justify-center"
+        className="hidden sm:flex fixed top-2 sm:top-4 right-2 sm:right-4 z-50 p-2 sm:p-3 bg-gradient-to-br from-purple-600/20 to-indigo-600/20 backdrop-blur-sm border border-purple-400/30 rounded-full shadow-lg hover:bg-purple-600/30 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 group min-h-[44px] min-w-[44px] items-center justify-center"
         aria-label="Learn how our AI works"
         title="How Our AI Works"
       >
         <InfoIcon className="w-5 h-5 sm:w-6 sm:h-6 text-purple-200 group-hover:text-white transition-colors" />
-        
-        {/* Animated Glow Effect */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        
-        {/* Pulse Ring */}
         <div className="absolute inset-0 border-2 border-purple-400/30 rounded-full animate-pulse"></div>
       </button>
 
@@ -507,9 +503,10 @@ const AppContent: React.FC = () => {
         onClose={() => setIsAIInfoModalOpen(false)}
       />
 
+      {/* Extractor CTA (hidden on small screens) */}
       <button
           onClick={() => setIsExtractorModalOpen(true)}
-          className="group fixed bottom-4 sm:bottom-8 left-2 sm:left-4 lg:left-8 z-30 p-3 sm:p-4 bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-700 text-white rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-500/50 animate-entry border border-purple-500/20 min-h-[44px] min-w-[44px]"
+          className="hidden sm:block group fixed bottom-4 sm:bottom-8 left-2 sm:left-4 lg:left-8 z-30 p-3 sm:p-4 bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-700 text-white rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-500/50 animate-entry border border-purple-500/20 min-h-[44px] min-w-[44px]"
           style={{ animationDelay: '1s' }}
           aria-label="Extract text from PDF with AI"
           title="AI PDF Analyzer - Extract text from any PDF"
