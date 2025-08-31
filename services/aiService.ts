@@ -4,6 +4,113 @@ import type { GradeLevel, WebSource, Message, StudyDocument, Flashcard, QuizQues
 import { canUseProxy, proxyGenerate } from './proxyService';
 import { AI_MODELS } from "../constants";
 
+// --- Token-aware chunking utilities (approximate) ---
+const approxTokenCount = (text: string): number => Math.ceil(((text || '').trim().length) / 4);
+
+const firstApproxTokens = (text: string, maxTokens: number): string => {
+  if (!text) return '';
+  if (maxTokens <= 0) return '';
+  const charBudget = Math.max(1, Math.floor(maxTokens * 4));
+  if (text.length <= charBudget) return text;
+  const slice = text.slice(0, charBudget);
+  const lastSentence = Math.max(slice.lastIndexOf('. '), slice.lastIndexOf('! '), slice.lastIndexOf('? '));
+  if (lastSentence > Math.floor(charBudget * 0.6)) return slice.slice(0, lastSentence + 1);
+  const lastSpace = slice.lastIndexOf(' ');
+  return lastSpace > 0 ? slice.slice(0, lastSpace) + '…' : slice + '…';
+};
+
+const chunkTextByApproxTokens = (text: string, chunkTokens = 300): string[] => {
+  if (!text) return [];
+  const sentences = text
+    .replace(/\r\n/g, '\n')
+    .split(/\n\n+/)
+    .flatMap(p => p.split(/(?<=[.!?])\s+/));
+  const chunks: string[] = [];
+  let current = '';
+  let used = 0;
+  for (const seg of sentences) {
+    const segTokens = approxTokenCount(seg);
+    if (used + segTokens <= chunkTokens || current.length === 0) {
+      current += (current ? ' ' : '') + seg;
+      used += segTokens;
+    } else {
+      chunks.push(current);
+      current = seg;
+      used = segTokens;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+};
+
+const buildDocumentsContext = (
+  documents: StudyDocument[],
+  opts?: { totalBudgetTokens?: number; perDocBudgetTokens?: number; chunkTokens?: number; includeHeadings?: boolean }
+): string => {
+  const totalBudget = opts?.totalBudgetTokens ?? 8000;
+  const perDocBudget = opts?.perDocBudgetTokens ?? 2000;
+  const chunkTokens = opts?.chunkTokens ?? 320;
+  const includeHeadings = opts?.includeHeadings ?? true;
+
+  let remaining = totalBudget;
+  const parts: string[] = [];
+  for (const doc of documents) {
+    if (remaining <= 0) break;
+    const docChunks = chunkTextByApproxTokens(doc.content || '', chunkTokens);
+    if (docChunks.length === 0) continue;
+    let usedForDoc = 0;
+    const buf: string[] = [];
+    for (const ch of docChunks) {
+      const tks = approxTokenCount(ch);
+      if (usedForDoc + tks > perDocBudget) break;
+      if (tks > remaining) break;
+      buf.push(ch);
+      usedForDoc += tks;
+      remaining -= tks;
+      if (remaining < Math.floor(chunkTokens * 0.6)) break;
+    }
+    if (buf.length > 0) {
+      parts.push(`${includeHeadings ? `## ${doc.name}\n` : ''}${buf.join('\n')}`);
+    }
+  }
+  return parts.join('\n\n');
+};
+
+// Token-aware variant to build the full prompt with documents
+const buildPromptWithDocumentsTokenAware = (documents: StudyDocument[], gradeLevel: GradeLevel, instruction: string): string => {
+  console.log('dY"? Building prompt (token-aware) with', documents.length, 'documents');
+  const documentsContent = buildDocumentsContext(documents, {
+    totalBudgetTokens: 8000,
+    perDocBudgetTokens: 2000,
+    chunkTokens: 320,
+    includeHeadings: true,
+  });
+  console.log('dY"? Total approx tokens in docs:', approxTokenCount(documentsContent));
+
+  const fullPrompt = `You are an educational AI tutor. Help students learn from their study materials.
+
+**Grade Level**: ${gradeLevel}th Grade
+
+**CRITICAL INSTRUCTIONS - MUST FOLLOW**:
+- You MUST ONLY use information from the provided study materials below
+- You CANNOT use any external knowledge, facts, or information from your training
+- You CANNOT reference anything not explicitly mentioned in these materials
+- If the materials don't contain enough information to answer a question, say "I can only find information about [what's available] in your study materials"
+- All responses must be directly based on and cite the provided documents
+- DO NOT add any introductory phrases or disclaimers about using only the provided materials
+- Provide direct, clean responses without unnecessary preambles
+
+**Study Materials (ONLY SOURCE OF INFORMATION)**:
+${documentsContent}
+
+**Task**: ${instruction}
+
+Please provide a helpful response using ONLY the information from the study materials above:`;
+
+  console.log('dY"? Final prompt length:', fullPrompt.length, 'characters');
+  return fullPrompt;
+};
+
 export class SafetyError extends Error {
   constructor(message: string) {
     super(message);
@@ -426,10 +533,13 @@ export const generateKeyTopics = async (
   }
   
   try {
-    // Create a comprehensive prompt for key topics
-    const documentsText = documents.map(doc => 
-      `${doc.name}:\n${doc.content.substring(0, 1500)}...`  // Limit content length
-    ).join('\n\n');
+    // Create a comprehensive prompt for key topics (token-aware)
+    const documentsText = buildDocumentsContext(documents, {
+      totalBudgetTokens: 5000,
+      perDocBudgetTokens: 1200,
+      chunkTokens: 280,
+      includeHeadings: false,
+    });
 
     const prompt = `You are an AI tutor helping a ${gradeLevel}th grade student. 
 
@@ -497,10 +607,13 @@ export const generateInitialChatMessage = async (
   }
   
   try {
-    // Create simple summary of documents
-    const documentsText = documents.map(doc => 
-      `${doc.name}: ${doc.content.substring(0, 500)}...`
-    ).join('\n\n');
+    // Create token-aware summary of documents
+    const documentsText = buildDocumentsContext(documents, {
+      totalBudgetTokens: 2000,
+      perDocBudgetTokens: 500,
+      chunkTokens: 220,
+      includeHeadings: false,
+    });
 
     const prompt = `You are a ${gradeLevel}th grade tutor. Welcome the student and describe what you can help them learn.
 
@@ -547,13 +660,19 @@ export const sendMessage = async (
   try {
     // Create simple context from documents
     const documentsText = documents.length > 0
-      ? documents.map(doc => `${doc.name}: ${doc.content.substring(0, 1000)}...`).join('\n\n')
+      ? buildDocumentsContext(documents, {
+          totalBudgetTokens: 6000,
+          perDocBudgetTokens: 1500,
+          chunkTokens: 300,
+          includeHeadings: false,
+        })
       : '(no study materials provided)';
 
     // Create simple conversation history
-    const conversationHistory = history.slice(-5).map(msg => 
-      `${msg.role}: ${msg.text.substring(0, 200)}...`
-    ).join('\n');
+    const conversationHistory = history
+      .slice(-5)
+      .map(msg => `${msg.role}: ${firstApproxTokens(msg.text, 120)}`)
+      .join('\n');
 
     const prompt = `You are a patient, helpful ${gradeLevel}th-grade tutor.
 
@@ -611,7 +730,7 @@ export const generateFlashcards = async (
 ): Promise<Flashcard[]> => {
   onProgress('Analyzing documents with Gemini AI...');
   
-  const prompt = buildPromptWithDocuments(
+  const prompt = buildPromptWithDocumentsTokenAware(
     documents,
     gradeLevel,
     `Generate exactly ${numFlashcards} flashcards. Use the study materials as the primary source; if they don't fully cover a topic, you may use accurate, widely taught knowledge appropriate for ${gradeLevel}th grade.
@@ -668,7 +787,7 @@ Only return the JSON array, no other text. Do not add explanations, notes, discl
     
     // Attempt 1b: ask for a compact, line-delimited format and parse it
     onProgress('Refining format...');
-    const compactPrompt = buildPromptWithDocuments(
+    const compactPrompt = buildPromptWithDocumentsTokenAware(
       documents,
       gradeLevel,
       `Return exactly ${numFlashcards} flashcards as ${numFlashcards} separate lines.\n\nEach line must be: term || definition\n- Use the double pipe "||" as the only delimiter\n- No numbering, no bullets, no code fences, no extra text\n- Keep definitions concise and ${gradeLevel}th-grade appropriate`
@@ -728,7 +847,7 @@ export const generateQuiz = async (
 ): Promise<QuizQuestion[]> => {
   onProgress('Analyzing content for quiz questions...');
   
-  const prompt = buildPromptWithDocuments(
+  const prompt = buildPromptWithDocumentsTokenAware(
     documents,
     gradeLevel,
     `Generate exactly ${numQuestions} multiple choice quiz questions. Use the study materials as the primary source; if they don't fully cover a topic, you may use accurate, widely taught knowledge appropriate for ${gradeLevel}th grade.

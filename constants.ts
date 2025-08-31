@@ -19,4 +19,12 @@ export const AI_MODELS: AiModel[] = [
     description: 'Latest Gemini 2.5 model with enhanced speed and advanced capabilities.',
     isAvailable: true,
   },
+  {
+    id: 'ai-advanced-analysis',
+    name: 'Advanced Analysis',
+    provider: 'gemini',
+    modelName: 'gemini-2.5-flash',
+    description: 'Planner + Synthesizer collaboration mode (configurable).',
+    isAvailable: true,
+  },
 ];
