@@ -207,7 +207,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       <div 
         ref={modalRef}
         className={`
-          relative w-full max-w-5xl max-h-[90vh] 
+          relative w-full max-w-[92vw] sm:max-w-5xl max-h-[90vh]
           transform transition-all duration-400 ease-out
           ${show ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-8'}
         `}
@@ -226,7 +226,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" style={{animationDuration: '5s', animationDelay: '1s'}} />
           </div>
           {/* Header */}
-          <div className="relative p-8 pb-6 border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent">
+          <div className="relative p-4 sm:p-8 pb-4 sm:pb-6 border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="
@@ -286,7 +286,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             {/* Enhanced Tab Navigation */}
-            <div className="flex gap-2 mt-8" role="tablist">
+            <div className="flex gap-2 mt-6 sm:mt-8 overflow-x-auto hide-scrollbar -mx-2 px-2" role="tablist">
               <TabButton 
                 tab="appearance" 
                 label="Appearance"
