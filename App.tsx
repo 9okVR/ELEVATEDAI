@@ -468,7 +468,7 @@ const AppContent: React.FC = () => {
       <div className="hidden"></div>
 
       {/* Mobile Compact Header */}
-      <div className="sm:hidden sticky top-0 z-60 -mx-2 px-3 py-2 bg-black/30 backdrop-blur-md border-b border-white/10 flex items-center justify-between">
+      <div className="sm:hidden sticky top-0 z-20 -mx-2 px-3 py-2 bg-black/30 backdrop-blur-md border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ElevatedAILogo className="w-6 h-6" showText={false} />
           <span className="text-white font-semibold">Elevated AI</span>
