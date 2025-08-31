@@ -30,6 +30,9 @@ import MagicWandIcon from './components/icons/MagicWandIcon';
 import CollaborationSettingsModal from './components/CollaborationSettingsModal';
 import InfoIcon from './components/icons/InfoIcon';
 import EllipsisHorizontalIcon from './components/icons/EllipsisHorizontalIcon';
+import UserIcon from './components/icons/UserIcon';
+import AuthModal from './components/AuthModal';
+import { supabase } from './services/supabaseClient';
 import AIInfoModal from './components/AIInfoModal';
 
 type DocumentStatus = 'ready' | 'processing' | 'error';
@@ -119,6 +122,25 @@ const AppContent: React.FC = () => {
   const [isImportExportModalOpen, setIsImportExportModalOpen] = useState(false);
   const [isAIInfoModalOpen, setIsAIInfoModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+
+  // Track Auth session to reflect signed-in status in header/buttons
+  useEffect(() => {
+    let unsub: (() => void) | undefined;
+    (async () => {
+      if (!supabase) return;
+      try {
+        const { data } = await supabase.auth.getSession();
+        setSessionEmail(data.session?.user?.email ?? null);
+        const sub = supabase.auth.onAuthStateChange((_evt, sess) => {
+          setSessionEmail(sess?.user?.email ?? null);
+        });
+        unsub = sub.data.subscription.unsubscribe;
+      } catch {}
+    })();
+    return () => { try { unsub && unsub(); } catch {} };
+  }, []);
 
 
   // No API key checking needed in mock version
@@ -440,6 +462,17 @@ const AppContent: React.FC = () => {
         <SettingsIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-300" />
       </button>
 
+      {/* Account Button (hidden on small screens) */}
+      <button
+        onClick={() => setIsAuthModalOpen(true)}
+        className="hidden sm:flex fixed top-16 sm:top-20 right-2 sm:right-4 z-50 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center relative"
+        aria-label="Open account"
+        title={sessionEmail ? `Signed in as ${sessionEmail}` : 'Sign In / Sign Up'}
+      >
+        <UserIcon className={`w-5 h-5 sm:w-6 sm:h-6 ${sessionEmail ? 'text-green-300' : 'text-gray-300'}`} />
+        {sessionEmail && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full ring-2 ring-black/40" />}
+      </button>
+
       {/* Mobile Compact Header */}
       <div className="sm:hidden sticky top-0 z-40 -mx-2 px-3 py-2 bg-black/30 backdrop-blur-md border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -468,6 +501,16 @@ const AppContent: React.FC = () => {
             </button>
             {isMobileMenuOpen && (
               <div className="absolute right-0 mt-2 w-56 bg-gray-900/95 border border-white/10 rounded-xl shadow-xl p-2">
+                <button
+                  onClick={() => { setIsAuthModalOpen(true); setIsMobileMenuOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
+                  title={sessionEmail ? `Signed in as ${sessionEmail}` : undefined}
+                >
+                  <UserIcon className={`w-4 h-4 ${sessionEmail ? 'text-green-300' : ''}`} />
+                  <span className="truncate">
+                    {sessionEmail ? `Account — ${sessionEmail}` : 'Account (Sign In / Up)'}
+                  </span>
+                </button>
                 <button
                   onClick={() => { setIsImportExportModalOpen(true); setIsMobileMenuOpen(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
@@ -550,6 +593,7 @@ const AppContent: React.FC = () => {
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
       />
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       <ImportExportModal
         isOpen={isImportExportModalOpen}
         onClose={() => setIsImportExportModalOpen(false)}

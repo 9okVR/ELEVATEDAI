@@ -18,8 +18,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [previewMode, setPreviewMode] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
-  const [authEmail, setAuthEmail] = useState('');
-  const [authPassword, setAuthPassword] = useState('');
+  // Auth handled in separate AuthModal; keep only API key management here
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [accountMsg, setAccountMsg] = useState<string | null>(null);
   
@@ -590,48 +589,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <p className="text-white/80">Sign in to use your own API key and get usage logging.</p>
-                    <input
-                      type="email"
-                      value={authEmail}
-                      onChange={(e) => setAuthEmail(e.target.value)}
-                      placeholder="Email"
-                      className="w-full bg-white/5 text-white placeholder-white/40 px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                    />
-                    <input
-                      type="password"
-                      value={authPassword}
-                      onChange={(e) => setAuthPassword(e.target.value)}
-                      placeholder="Password"
-                      className="w-full bg-white/5 text-white placeholder-white/40 px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={async () => {
-                          setAccountMsg(null);
-                          try {
-                            const { error } = await supabase!.auth.signInWithPassword({ email: authEmail, password: authPassword });
-                            setAccountMsg(error ? error.message : 'Signed in');
-                          } catch (e) {
-                            setAccountMsg('Sign in failed');
-                          }
-                        }}
-                        className="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold"
-                      >Sign In</button>
-                      <button
-                        onClick={async () => {
-                          setAccountMsg(null);
-                          try {
-                            const { error } = await supabase!.auth.signUp({ email: authEmail, password: authPassword });
-                            setAccountMsg(error ? error.message : 'Check your email to confirm sign up');
-                          } catch (e) {
-                            setAccountMsg('Sign up failed');
-                          }
-                        }}
-                        className="px-4 py-3 rounded-xl bg-white/10 text-white/80 hover:bg-white/20"
-                      >Sign Up</button>
-                    </div>
-                    {accountMsg && <p className="text-sm text-purple-300">{accountMsg}</p>}
+                    <p className="text-white/80">Use the Account button to sign in or sign up. Once signed in, you can save your Gemini API key here.</p>
                   </div>
                 )}
               </div>
