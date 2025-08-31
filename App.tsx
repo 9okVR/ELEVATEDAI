@@ -32,6 +32,7 @@ import InfoIcon from './components/icons/InfoIcon';
 import EllipsisHorizontalIcon from './components/icons/EllipsisHorizontalIcon';
 import UserIcon from './components/icons/UserIcon';
 import AuthModal from './components/AuthModal';
+import { useTheme } from './contexts/ThemeContext';
 import { supabase } from './services/supabaseClient';
 import AIInfoModal from './components/AIInfoModal';
 
@@ -123,6 +124,7 @@ const AppContent: React.FC = () => {
   const [isAIInfoModalOpen, setIsAIInfoModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { toggleTheme } = useTheme();
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
 
   // Track Auth session to reflect signed-in status in header/buttons
@@ -465,7 +467,7 @@ const AppContent: React.FC = () => {
       {/* Account Button (hidden on small screens) */}
       <button
         onClick={() => setIsAuthModalOpen(true)}
-        className="hidden sm:flex fixed top-16 sm:top-20 right-2 sm:right-4 z-50 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center relative"
+        className="hidden sm:flex fixed top-24 sm:top-24 right-2 sm:right-4 z-60 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center relative"
         aria-label="Open account"
         title={sessionEmail ? `Signed in as ${sessionEmail}` : 'Sign In / Sign Up'}
       >
@@ -526,6 +528,13 @@ const AppContent: React.FC = () => {
                   PDF Text Extractor
                 </button>
                 <button
+                  onClick={() => { try { toggleTheme(); } catch {} setIsMobileMenuOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0-1.414 1.414M7.05 16.95l-1.414 1.414"/></svg>
+                  Toggle Theme
+                </button>
+                <button
                   onClick={() => { setIsAIInfoModalOpen(true); setIsMobileMenuOpen(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
                 >
@@ -548,7 +557,7 @@ const AppContent: React.FC = () => {
       {/* Import/Export Button (hidden on small screens) */}
       <button
         onClick={() => setIsImportExportModalOpen(true)}
-        className="hidden sm:flex fixed top-16 sm:top-20 left-2 sm:left-4 z-50 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
+        className="hidden sm:flex fixed top-16 sm:top-20 left-2 sm:left-4 z-40 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
         aria-label="Import/Export data"
         title="Import & Export"
       >
@@ -558,7 +567,7 @@ const AppContent: React.FC = () => {
       {/* AI Info Button (hidden on small screens) */}
       <button
         onClick={() => setIsAIInfoModalOpen(true)}
-        className="hidden sm:flex fixed top-2 sm:top-4 right-2 sm:right-4 z-50 p-2 sm:p-3 bg-gradient-to-br from-purple-600/20 to-indigo-600/20 backdrop-blur-sm border border-purple-400/30 rounded-full shadow-lg hover:bg-purple-600/30 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 group min-h-[44px] min-w-[44px] items-center justify-center"
+        className="hidden sm:flex fixed top-2 sm:top-4 right-2 sm:right-4 z-40 p-2 sm:p-3 bg-gradient-to-br from-purple-600/20 to-indigo-600/20 backdrop-blur-sm border border-purple-400/30 rounded-full shadow-lg hover:bg-purple-600/30 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 group min-h-[44px] min-w-[44px] items-center justify-center"
         aria-label="Learn how our AI works"
         title="How Our AI Works"
       >
