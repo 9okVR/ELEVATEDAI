@@ -53,6 +53,38 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const signInWithDiscord = async () => {
+    setMessage(null);
+    try {
+      if (!supabase) { setMessage('Supabase not configured'); return; }
+      await supabase.auth.signInWithOAuth({
+        provider: 'discord',
+        options: {
+          redirectTo: window.location.origin,
+          scopes: 'identify email',
+        },
+      });
+    } catch {
+      setMessage('Discord sign-in failed');
+    }
+  };
+
+  const signInWithApple = async () => {
+    setMessage(null);
+    try {
+      if (!supabase) { setMessage('Supabase not configured'); return; }
+      await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: {
+          redirectTo: window.location.origin,
+          scopes: 'name email',
+        },
+      });
+    } catch {
+      setMessage('Apple sign-in failed');
+    }
+  };
+
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${show ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}>
       <div className={`absolute inset-0 bg-black/60 backdrop-blur-xl ${show ? 'opacity-100' : 'opacity-0'} transition-opacity`} onClick={onClose} />
@@ -64,6 +96,30 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
         <div className="space-y-3">
+          {/* SSO Providers */}
+          <div className="space-y-2">
+            <button
+              onClick={signInWithApple}
+              className="w-full py-3 rounded-xl bg-white/90 text-black font-semibold hover:bg-white transition-colors"
+            >
+              Continue with Apple
+            </button>
+            <button
+              onClick={signInWithDiscord}
+              className="w-full py-3 rounded-xl bg-[#5865F2] text-white font-semibold hover:brightness-110 transition"
+            >
+              Continue with Discord
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 text-white/40 text-xs select-none">
+            <div className="flex-1 h-px bg-white/10" />
+            <span>or</span>
+            <div className="flex-1 h-px bg-white/10" />
+          </div>
+
+          {/* Email/password */}
           <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" className="w-full bg-white/5 text-white placeholder-white/40 px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
           <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" className="w-full bg-white/5 text-white placeholder-white/40 px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
           {message && <p className="text-sm text-purple-300">{message}</p>}
@@ -78,4 +134,3 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 };
 
 export default AuthModal;
-
