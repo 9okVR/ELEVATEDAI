@@ -120,6 +120,7 @@ const AppContent: React.FC = () => {
   const [safetyModalInfo, setSafetyModalInfo] = useState<{isOpen: boolean, reason: string | null}>({ isOpen: false, reason: null });
   const [isExtractorModalOpen, setIsExtractorModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [settingsInitialTab, setSettingsInitialTab] = useState<'appearance' | 'layout' | 'advanced' | 'account'>('appearance');
   const [isImportExportModalOpen, setIsImportExportModalOpen] = useState(false);
   const [isAIInfoModalOpen, setIsAIInfoModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -455,14 +456,14 @@ const AppContent: React.FC = () => {
       <StudyTimer isActive={isChatActive} />
       
       {/* Settings Button (hidden on small screens; provided via mobile header) */}
-      <button
-        onClick={() => setIsSettingsModalOpen(true)}
-        className="hidden sm:flex fixed top-2 sm:top-4 left-2 sm:left-4 z-30 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
-        aria-label="Open settings"
-        title="Customize Interface"
-      >
-        <SettingsIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-300" />
-      </button>
+          <button
+            onClick={() => setIsSettingsModalOpen(true)}
+            className="hidden sm:flex fixed top-2 sm:top-4 left-2 sm:left-4 z-30 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
+            aria-label="Open settings"
+            title="Customize Interface"
+          >
+            <SettingsIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-300" />
+          </button>
 
       {/* Account Button (desktop header now handles this) */}
       <div className="hidden"></div>
@@ -496,7 +497,15 @@ const AppContent: React.FC = () => {
             {isMobileMenuOpen && (
               <div className="absolute right-0 mt-2 w-56 bg-gray-900/95 border border-white/10 rounded-xl shadow-xl p-2 z-50">
                 <button
-                  onClick={() => { setIsAuthModalOpen(true); setIsMobileMenuOpen(false); }}
+                  onClick={() => {
+                    if (sessionEmail) {
+                      setSettingsInitialTab('account');
+                      setIsSettingsModalOpen(true);
+                    } else {
+                      setIsAuthModalOpen(true);
+                    }
+                    setIsMobileMenuOpen(false);
+                  }}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
                   title={sessionEmail ? `Signed in as ${sessionEmail}` : undefined}
                 >
@@ -584,6 +593,7 @@ const AppContent: React.FC = () => {
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
+        initialTab={settingsInitialTab}
       />
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       <ImportExportModal
@@ -643,7 +653,14 @@ const AppContent: React.FC = () => {
               <InfoIcon className="w-5 h-5" />
             </button>
             <button
-              onClick={() => setIsAuthModalOpen(true)}
+              onClick={() => {
+                if (sessionEmail) {
+                  setSettingsInitialTab('account');
+                  setIsSettingsModalOpen(true);
+                } else {
+                  setIsAuthModalOpen(true);
+                }
+              }}
               className="p-2 rounded-lg bg-white/10 border border-white/10 text-white/80 hover:bg-white/20 relative"
               aria-label="Open account"
               title={sessionEmail ? `Signed in as ${sessionEmail}` : 'Sign In / Sign Up'}

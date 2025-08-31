@@ -7,14 +7,15 @@ import { useTheme } from '../contexts/ThemeContext';
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialTab?: 'appearance' | 'layout' | 'advanced' | 'account';
 }
 
 type TabType = 'appearance' | 'layout' | 'advanced' | 'account';
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialTab }) => {
   const [show, setShow] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>('appearance');
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab ?? 'appearance');
   const [previewMode, setPreviewMode] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
@@ -32,6 +33,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (isOpen) {
+      setActiveTab(initialTab ?? 'appearance');
       setShouldRender(true);
       const timer = setTimeout(() => setShow(true), 50);
       return () => clearTimeout(timer);
@@ -40,7 +42,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       const timer = setTimeout(() => setShouldRender(false), 400);
       return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, initialTab]);
 
   // Supabase session tracking
   useEffect(() => {
