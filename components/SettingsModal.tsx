@@ -185,7 +185,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   return (
     <div 
       className={`
-        fixed inset-0 z-50 flex items-center justify-center p-4
+        fixed inset-0 z-[60] flex items-center justify-center p-4
         transition-all duration-400 ease-out
         ${show ? 'opacity-100' : 'opacity-0'}
       `}

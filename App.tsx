@@ -468,7 +468,7 @@ const AppContent: React.FC = () => {
       <div className="hidden"></div>
 
       {/* Mobile Compact Header */}
-      <div className="sm:hidden sticky top-0 z-20 -mx-2 px-3 py-2 bg-black/30 backdrop-blur-md border-b border-white/10 flex items-center justify-between">
+      <div className="sm:hidden sticky top-0 z-40 -mx-2 px-3 py-2 bg-black/30 backdrop-blur-md border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ElevatedAILogo className="w-6 h-6" showText={false} />
           <span className="text-white font-semibold">Elevated AI</span>
@@ -494,7 +494,7 @@ const AppContent: React.FC = () => {
               <EllipsisHorizontalIcon className="w-5 h-5" />
             </button>
             {isMobileMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-gray-900/95 border border-white/10 rounded-xl shadow-xl p-2">
+              <div className="absolute right-0 mt-2 w-56 bg-gray-900/95 border border-white/10 rounded-xl shadow-xl p-2 z-50">
                 <button
                   onClick={() => { setIsAuthModalOpen(true); setIsMobileMenuOpen(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
@@ -659,10 +659,9 @@ const AppContent: React.FC = () => {
               style={{ animationDelay: '0.2s' }}
             >
               <div className="inline-flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
-                <span className="relative inline-flex items-center justify-center">
-                  <span className="absolute inset-0 rounded-full bg-black/20 blur-md" style={{transform: 'scale(1.2)'}} />
+                <div className="relative inline-flex items-center justify-center p-1.5 sm:p-2 rounded-full bg-black/40 border border-white/10 shadow-md shadow-black/40">
                   <ElevatedAILogo className="w-12 h-12 sm:w-16 sm:h-16" showText={false} />
-                </span>
+                </div>
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
                   Elevated <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">AI</span>
                   <div className="inline-flex items-center gap-2 ml-1 sm:ml-3">
