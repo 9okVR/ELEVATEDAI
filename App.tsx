@@ -29,6 +29,7 @@ import TextExtractorModal from './components/TextExtractorModal';
 import MagicWandIcon from './components/icons/MagicWandIcon';
 import CollaborationSettingsModal from './components/CollaborationSettingsModal';
 import InfoIcon from './components/icons/InfoIcon';
+import EllipsisHorizontalIcon from './components/icons/EllipsisHorizontalIcon';
 import AIInfoModal from './components/AIInfoModal';
 
 type DocumentStatus = 'ready' | 'processing' | 'error';
@@ -117,6 +118,7 @@ const AppContent: React.FC = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isImportExportModalOpen, setIsImportExportModalOpen] = useState(false);
   const [isAIInfoModalOpen, setIsAIInfoModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
 
   // No API key checking needed in mock version
@@ -428,15 +430,77 @@ const AppContent: React.FC = () => {
       <ThemeToggle />
       <StudyTimer isActive={isChatActive} />
       
-      {/* Settings Button */}
+      {/* Settings Button (hidden on small screens; provided via mobile header) */}
       <button
         onClick={() => setIsSettingsModalOpen(true)}
-        className="fixed top-2 sm:top-4 left-2 sm:left-4 z-50 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+        className="hidden sm:flex fixed top-2 sm:top-4 left-2 sm:left-4 z-50 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
         aria-label="Open settings"
         title="Customize Interface"
       >
         <SettingsIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-300" />
       </button>
+
+      {/* Mobile Compact Header */}
+      <div className="sm:hidden sticky top-0 z-40 -mx-2 px-3 py-2 bg-black/30 backdrop-blur-md border-b border-white/10 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ElevatedAILogo className="w-6 h-6" showText={false} />
+          <span className="text-white font-semibold">Elevated AI</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsSettingsModalOpen(true)}
+            className="p-2 rounded-lg bg-white/10 border border-white/10 text-white/80 hover:bg-white/20"
+            aria-label="Open settings"
+            title="Settings"
+          >
+            <SettingsIcon className="w-5 h-5" />
+          </button>
+          <div className="relative">
+            <button
+              onClick={() => setIsMobileMenuOpen(v => !v)}
+              className="p-2 rounded-lg bg-white/10 border border-white/10 text-white/80 hover:bg-white/20"
+              aria-haspopup="menu"
+              aria-expanded={isMobileMenuOpen}
+              aria-label="More"
+              title="More"
+            >
+              <EllipsisHorizontalIcon className="w-5 h-5" />
+            </button>
+            {isMobileMenuOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-gray-900/95 border border-white/10 rounded-xl shadow-xl p-2">
+                <button
+                  onClick={() => { setIsImportExportModalOpen(true); setIsMobileMenuOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
+                >
+                  <DownloadIcon className="w-4 h-4" />
+                  Import / Export
+                </button>
+                <button
+                  onClick={() => { setIsExtractorModalOpen(true); setIsMobileMenuOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
+                >
+                  <MagicWandIcon className="w-4 h-4" />
+                  PDF Text Extractor
+                </button>
+                <button
+                  onClick={() => { setIsAIInfoModalOpen(true); setIsMobileMenuOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
+                >
+                  <InfoIcon className="w-4 h-4" />
+                  How Our AI Works
+                </button>
+                <button
+                  onClick={() => { setIsCollaborationModalOpen(true); setIsMobileMenuOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
+                >
+                  <SettingsIcon className="w-4 h-4" />
+                  Collaboration Settings
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Import/Export Button (hidden on small screens) */}
       <button
