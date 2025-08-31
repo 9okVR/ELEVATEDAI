@@ -332,21 +332,21 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Content Area */}
-          <div className="relative p-8 custom-scrollbar overflow-y-auto max-h-[60vh]">
+          <div className="relative p-3 sm:p-8 custom-scrollbar overflow-y-auto max-h-[70vh] sm:max-h-[60vh]">
             {/* Appearance Tab */}
             {activeTab === 'appearance' && (
-              <div className="space-y-10">
+              <div className="space-y-6 sm:space-y-10">
                 {/* Theme Toggle */}
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-2xl font-bold text-white mb-2">Theme Mode</h3>
-                      <p className="text-white/70">Switch between light and dark themes</p>
-                    </div>
+                <div className="space-y-4 sm:space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                      <h3 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">Theme Mode</h3>
+                      <p className="text-white/70 text-sm sm:text-base">Switch between light and dark themes</p>
+                      </div>
                     <button
                       onClick={toggleTheme}
                       className={`
-                        relative w-20 h-10 rounded-full transition-all duration-300
+                        relative w-16 h-8 sm:w-20 sm:h-10 rounded-full transition-all duration-300
                         ${theme === 'dark' 
                           ? 'bg-gray-700 hover:bg-gray-600' 
                           : 'bg-yellow-400 hover:bg-yellow-300'
@@ -379,16 +379,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 {/* Color Schemes */}
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-2xl font-bold text-white mb-2">Color Scheme</h3>
-                    <p className="text-white/70">Choose your preferred accent colors</p>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">Color Scheme</h3>
+                    <p className="text-white/70 text-sm sm:text-base">Choose your preferred accent colors</p>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     {colorSchemeOptions.map((option) => (
                       <button
                         key={option.value}
                         onClick={() => setColorScheme(option.value)}
                         className={`
-                          group relative p-6 rounded-2xl border-2 transition-all duration-300 text-left
+                          group relative p-4 sm:p-6 rounded-2xl border-2 transition-all duration-300 text-left
                           backdrop-blur-sm overflow-hidden
                           ${colorScheme === option.value
                             ? 'border-white/40 bg-white/10 shadow-lg transform scale-105'
@@ -406,7 +406,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                         <div className="relative z-10">
                           <div className="flex items-center gap-4 mb-4">
                             <div className={`
-                              w-12 h-12 rounded-xl bg-gradient-to-br ${option.gradient}
+                              w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${option.gradient}
                               shadow-lg transition-transform duration-300
                               ${colorScheme === option.value ? 'scale-110' : 'group-hover:scale-105'}
                             `} />
@@ -436,20 +436,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
             {/* Layout Tab */}
             {activeTab === 'layout' && (
-              <div className="space-y-10">
+              <div className="space-y-6 sm:space-y-10">
                 {/* Font Size */}
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-2xl font-bold text-white mb-2">Font Size</h3>
-                    <p className="text-white/70">Adjust text size for optimal reading</p>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">Font Size</h3>
+                    <p className="text-white/70 text-sm sm:text-base">Adjust text size for optimal reading</p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
                     {fontSizeOptions.map((option) => (
                       <button
                         key={option.value}
                         onClick={() => setFontSize(option.value)}
                         className={`
-                          group p-6 rounded-2xl border-2 transition-all duration-300 text-center
+                          group p-4 sm:p-6 rounded-2xl border-2 transition-all duration-300 text-center
                           backdrop-blur-sm
                           ${fontSize === option.value
                             ? 'border-white/40 bg-white/10 shadow-lg transform scale-105'
@@ -459,17 +459,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                         `}
                       >
                         <div className={`
-                          text-4xl font-bold text-white mb-3 transition-all duration-300
-                          ${option.value === 'small' ? 'text-3xl' :
-                            option.value === 'medium' ? 'text-4xl' :
-                            option.value === 'large' ? 'text-5xl' : 'text-6xl'
+                          text-3xl sm:text-4xl font-bold text-white mb-2 sm:mb-3 transition-all duration-300
+                          ${option.value === 'small' ? 'text-2xl sm:text-3xl' :
+                            option.value === 'medium' ? 'text-3xl sm:text-4xl' :
+                            option.value === 'large' ? 'text-4xl sm:text-5xl' : 'text-5xl sm:text-6xl'
                           }
                           ${fontSize === option.value ? 'scale-110' : 'group-hover:scale-105'}
                         `}>
                           {option.preview}
                         </div>
-                        <h4 className="text-lg font-bold text-white mb-1">{option.label}</h4>
-                        <p className="text-white/70 text-sm">{option.description}</p>
+                      <h4 className="text-base sm:text-lg font-bold text-white mb-1">{option.label}</h4>
+                      <p className="text-white/70 text-xs sm:text-sm">{option.description}</p>
                         
                         {fontSize === option.value && (
                           <div className="mt-3 flex justify-center">
@@ -496,8 +496,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                       <button
                         key={option.value}
                         onClick={() => setLayoutMode(option.value)}
-                        className={`
-                          group w-full p-6 rounded-2xl border-2 transition-all duration-300 text-left
+                    className={`
+                          group w-full p-4 sm:p-6 rounded-2xl border-2 transition-all duration-300 text-left
                           backdrop-blur-sm
                           ${layoutMode === option.value
                             ? 'border-white/40 bg-white/10 shadow-lg transform scale-105'
