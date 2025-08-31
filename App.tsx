@@ -457,7 +457,7 @@ const AppContent: React.FC = () => {
       {/* Settings Button (hidden on small screens; provided via mobile header) */}
       <button
         onClick={() => setIsSettingsModalOpen(true)}
-        className="hidden sm:flex fixed top-2 sm:top-4 left-2 sm:left-4 z-50 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
+        className="hidden sm:flex fixed top-2 sm:top-4 left-2 sm:left-4 z-30 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
         aria-label="Open settings"
         title="Customize Interface"
       >
@@ -476,7 +476,7 @@ const AppContent: React.FC = () => {
       </button>
 
       {/* Mobile Compact Header */}
-      <div className="sm:hidden sticky top-0 z-40 -mx-2 px-3 py-2 bg-black/30 backdrop-blur-md border-b border-white/10 flex items-center justify-between">
+      <div className="sm:hidden sticky top-0 z-60 -mx-2 px-3 py-2 bg-black/30 backdrop-blur-md border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ElevatedAILogo className="w-6 h-6" showText={false} />
           <span className="text-white font-semibold">Elevated AI</span>
@@ -557,7 +557,7 @@ const AppContent: React.FC = () => {
       {/* Import/Export Button (hidden on small screens) */}
       <button
         onClick={() => setIsImportExportModalOpen(true)}
-        className="hidden sm:flex fixed top-16 sm:top-20 left-2 sm:left-4 z-40 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
+        className="hidden sm:flex fixed top-28 sm:top-28 left-2 sm:left-4 z-30 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
         aria-label="Import/Export data"
         title="Import & Export"
       >
