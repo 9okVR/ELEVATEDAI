@@ -464,22 +464,28 @@ const AppContent: React.FC = () => {
         <SettingsIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-300" />
       </button>
 
-      {/* Account Button (hidden on small screens) */}
-      <button
-        onClick={() => setIsAuthModalOpen(true)}
-        className="hidden sm:flex fixed top-24 sm:top-24 right-2 sm:right-4 z-60 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center relative"
-        aria-label="Open account"
-        title={sessionEmail ? `Signed in as ${sessionEmail}` : 'Sign In / Sign Up'}
-      >
-        <UserIcon className={`w-5 h-5 sm:w-6 sm:h-6 ${sessionEmail ? 'text-green-300' : 'text-gray-300'}`} />
-        {sessionEmail && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full ring-2 ring-black/40" />}
-      </button>
+      {/* Account Button (desktop header now handles this) */}
+      <div className="hidden"></div>
 
       {/* Mobile Compact Header */}
       <div className="sm:hidden sticky top-0 z-60 -mx-2 px-3 py-2 bg-black/30 backdrop-blur-md border-b border-white/10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ElevatedAILogo className="w-6 h-6" showText={false} />
-          <span className="text-white font-semibold">Elevated AI</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsBetaModalOpen(true)}
+            className="text-[11px] font-semibold text-purple-300 bg-white/10 border border-white/10 px-2 py-1 rounded-full"
+            aria-label="Beta information"
+            title="Beta | 2.5v"
+          >
+            Beta | 2.5v
+          </button>
+          <button
+            onClick={() => { try { toggleTheme(); } catch {} }}
+            className="p-2 rounded-lg bg-white/10 border border-white/10 text-white/80 hover:bg-white/20"
+            aria-label="Toggle theme"
+            title="Toggle theme"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0-1.414 1.414M7.05 16.95l-1.414 1.414"/></svg>
+          </button>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -564,17 +570,8 @@ const AppContent: React.FC = () => {
         <DownloadIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-300" />
       </button>
 
-      {/* AI Info Button (hidden on small screens) */}
-      <button
-        onClick={() => setIsAIInfoModalOpen(true)}
-        className="hidden sm:flex fixed top-2 sm:top-4 right-2 sm:right-4 z-40 p-2 sm:p-3 bg-gradient-to-br from-purple-600/20 to-indigo-600/20 backdrop-blur-sm border border-purple-400/30 rounded-full shadow-lg hover:bg-purple-600/30 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 group min-h-[44px] min-w-[44px] items-center justify-center"
-        aria-label="Learn how our AI works"
-        title="How Our AI Works"
-      >
-        <InfoIcon className="w-5 h-5 sm:w-6 sm:h-6 text-purple-200 group-hover:text-white transition-colors" />
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        <div className="absolute inset-0 border-2 border-purple-400/30 rounded-full animate-pulse"></div>
-      </button>
+      {/* AI Info Button (desktop header now handles this) */}
+      <div className="hidden"></div>
 
       <div className="aurora-background">
         <div className="aurora-shape aurora-shape-1"></div>
@@ -647,6 +644,29 @@ const AppContent: React.FC = () => {
       </button>
 
       <div className="container mx-auto max-w-7xl relative z-10 px-2 sm:px-4">
+        {/* Desktop top bar (scrolls with page) */}
+        <div className="hidden sm:flex items-center justify-between py-2">
+          <div />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsAIInfoModalOpen(true)}
+              className="p-2 rounded-lg bg-white/10 border border-white/10 text-white/80 hover:bg-white/20"
+              aria-label="How Our AI Works"
+              title="How Our AI Works"
+            >
+              <InfoIcon className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="p-2 rounded-lg bg-white/10 border border-white/10 text-white/80 hover:bg-white/20 relative"
+              aria-label="Open account"
+              title={sessionEmail ? `Signed in as ${sessionEmail}` : 'Sign In / Sign Up'}
+            >
+              <UserIcon className={`w-5 h-5 ${sessionEmail ? 'text-green-300' : ''}`} />
+              {sessionEmail && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full ring-2 ring-black/40" />}
+            </button>
+          </div>
+        </div>
         <div className="lg:flex lg:flex-col lg:justify-center lg:min-h-screen">
             <header 
               className="text-center mb-8 sm:mb-12 animate-entry"
