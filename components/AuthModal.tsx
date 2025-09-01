@@ -93,6 +93,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const signInWithGoogle = async () => {
+    setMessage(null);
+    try {
+      if (!supabase) { setMessage('Supabase not configured'); return; }
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+          // scopes default to basic profile+email; customize if you need more
+        },
+      });
+    } catch {
+      setMessage('Google sign-in failed');
+    }
+  };
+
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 pt-safe pb-safe overscroll-contain ${show ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}>
       <div className={`absolute inset-0 bg-black/60 backdrop-blur-xl ${show ? 'opacity-100' : 'opacity-0'} transition-opacity`} onClick={onClose} />
@@ -106,6 +122,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         <div className="space-y-3">
           {/* SSO Providers */}
           <div className="space-y-2">
+            <button
+              onClick={signInWithGoogle}
+              className="w-full py-3 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 transition-colors border border-gray-200"
+            >
+              Continue with Google
+            </button>
             <button
               onClick={signInWithApple}
               className="w-full py-3 rounded-xl bg-white/90 text-black font-semibold hover:bg-white transition-colors"
