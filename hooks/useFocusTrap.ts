@@ -13,19 +13,23 @@ export function useFocusTrap(containerRef: RefObject<HTMLElement>, active: boole
 
   useEffect(() => {
     if (!active) return;
+    const root = containerRef.current;
+    if (!root) return;
     prevFocused.current = document.activeElement as HTMLElement | null;
 
-    const focusables = getFocusable(containerRef.current!);
+    const focusables = getFocusable(root);
     if (focusables.length > 0) {
       focusables[0].focus();
     } else {
-      containerRef.current?.focus();
+      try { root.focus?.(); } catch {}
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (!active) return;
       if (e.key !== 'Tab') return;
-      const els = getFocusable(containerRef.current!);
+      const currentRoot = containerRef.current;
+      if (!currentRoot) return;
+      const els = getFocusable(currentRoot);
       if (els.length === 0) return;
       const first = els[0];
       const last = els[els.length - 1];
@@ -49,4 +53,3 @@ export function useFocusTrap(containerRef: RefObject<HTMLElement>, active: boole
     };
   }, [active, containerRef]);
 }
-
