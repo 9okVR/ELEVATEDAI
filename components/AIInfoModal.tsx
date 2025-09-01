@@ -122,7 +122,7 @@ const AIInfoModal: React.FC<AIInfoModalProps> = ({
 
   return (
     <div 
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all ease-out ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 pt-safe pb-safe overscroll-contain transition-all ease-out ${
         prefersReducedMotion ? 'duration-150' : 'duration-400'
       } ${
         show 
@@ -138,7 +138,7 @@ const AIInfoModal: React.FC<AIInfoModalProps> = ({
       <div 
         ref={modalRef}
         className={`
-          relative w-full max-w-5xl max-h-[90vh] 
+          relative w-full max-w-5xl max-h-[90vh] max-h-[90dvh] 
           bg-white/[0.02] backdrop-blur-3xl 
           border border-white/20 
           rounded-3xl shadow-2xl 
@@ -222,7 +222,7 @@ const AIInfoModal: React.FC<AIInfoModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="relative p-8 overflow-y-auto max-h-[calc(90vh-140px)] custom-scrollbar">
+        <div className="relative p-8 overflow-y-auto max-h-[calc(90vh-140px)] max-h-[calc(90dvh-140px)] custom-scrollbar">
           <div className="space-y-8">
             {/* Process Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

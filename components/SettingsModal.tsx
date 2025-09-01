@@ -79,6 +79,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Lock body scroll when modal is open (mobile fix)
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isOpen]);
+
   if (!shouldRender) return null;
 
   const fontSizeOptions: { value: FontSize; label: string; description: string; preview: string }[] = [
@@ -187,7 +195,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
   return (
     <div 
       className={`
-        fixed inset-0 z-[60] flex items-center justify-center p-4
+        fixed inset-0 z-[60] flex items-center justify-center p-4 pt-safe pb-safe overscroll-contain
         transition-all duration-400 ease-out
         ${show ? 'opacity-100' : 'opacity-0'}
       `}
@@ -209,7 +217,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
       <div 
         ref={modalRef}
         className={`
-          relative w-full max-w-[92vw] sm:max-w-5xl max-h-[90vh]
+          relative w-full max-w-[92vw] sm:max-w-5xl max-h-[90vh] max-h-[90dvh]
           transform transition-all duration-400 ease-out
           ${show ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-8'}
         `}
@@ -334,7 +342,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
           </div>
 
           {/* Content Area */}
-          <div className="relative p-3 sm:p-8 custom-scrollbar overflow-y-auto max-h-[70vh] sm:max-h-[60vh]">
+          <div className="relative p-3 sm:p-8 custom-scrollbar overflow-y-auto max-h-[70vh] sm:max-h-[60vh] max-h-[70dvh] sm:max-h-[60dvh]">
             {/* Appearance Tab */}
             {activeTab === 'appearance' && (
               <div className="space-y-6 sm:space-y-10">

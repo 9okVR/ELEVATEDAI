@@ -50,6 +50,14 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({
     }
   }, [isOpen]);
 
+  // Lock body scroll while modal is open (prevents background scroll/cropping on mobile)
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isOpen]);
+
   if (!shouldRender) return null;
 
   const showMessage = (type: 'success' | 'error', text: string) => {
@@ -149,13 +157,13 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({
 
   return (
     <>
-      <div className={`fixed inset-0 flex items-center justify-center z-50 p-4 transition-opacity duration-300 ease-out ${
+      <div className={`fixed inset-0 flex items-center justify-center z-50 p-4 pt-safe pb-safe overscroll-contain transition-opacity duration-300 ease-out ${
         show ? 'opacity-100' : 'opacity-0'
       }`}>
         <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300 ease-out ${
           show ? 'opacity-100' : 'opacity-0'
         }`} onClick={onClose}></div>
-        <div className={`relative bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out ${
+        <div className={`relative bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] max-h-[90dvh] overflow-y-auto transform transition-all duration-300 ease-out ${
           show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
         }`}>
           <div className="p-6">

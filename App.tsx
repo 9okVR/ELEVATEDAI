@@ -451,7 +451,7 @@ const AppContent: React.FC = () => {
   const canStart = documents.length > 0 && documents.every(d => d.status === 'ready') && selectedGrade !== null && !isLoading;
 
   return (
-    <div className="min-h-screen bg-[#0D0B14] text-white font-sans p-2 sm:p-4 lg:p-8 relative overflow-hidden">
+    <div className="min-h-screen min-h-[100dvh] bg-[#0D0B14] text-white font-sans p-2 sm:p-4 lg:p-8 relative overflow-hidden">
       <ThemeToggle />
       <StudyTimer isActive={isChatActive} />
       

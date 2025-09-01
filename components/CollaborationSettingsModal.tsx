@@ -31,6 +31,14 @@ const CollaborationSettingsModal: React.FC<CollaborationSettingsModalProps> = ({
     }
   }, [isOpen]);
 
+  // Lock body scroll while open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isOpen]);
+
   if (!shouldRender) return null;
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -41,11 +49,11 @@ const CollaborationSettingsModal: React.FC<CollaborationSettingsModalProps> = ({
 
   return (
     <div 
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 ease-out ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 pt-safe pb-safe overscroll-contain transition-all duration-300 ease-out ${
         show ? 'backdrop-blur-lg bg-black/70' : 'backdrop-blur-none bg-black/0'
       }`}
-      onClick={handleBackdropClick}
-    >
+     onClick={handleBackdropClick}
+   >
       <div 
         className={`relative w-full max-w-2xl bg-gradient-to-br from-gray-900/95 to-purple-900/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl transition-all duration-300 ease-out ${
           show ? 'scale-100 opacity-100' : 'scale-95 opacity-0'

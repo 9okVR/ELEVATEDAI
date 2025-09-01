@@ -33,6 +33,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isOpen]);
+
   if (!shouldRender) return null;
 
   const doAuth = async () => {
@@ -86,7 +94,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${show ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 pt-safe pb-safe overscroll-contain ${show ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}>
       <div className={`absolute inset-0 bg-black/60 backdrop-blur-xl ${show ? 'opacity-100' : 'opacity-0'} transition-opacity`} onClick={onClose} />
       <div ref={modalRef} className={`relative w-full max-w-md bg-gray-900/95 border border-white/10 rounded-2xl shadow-2xl p-6 ${show ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'} transition-all`}>
         <div className="flex items-center justify-between mb-4">

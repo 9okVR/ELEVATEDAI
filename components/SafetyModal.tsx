@@ -24,6 +24,14 @@ const SafetyModal: React.FC<SafetyModalProps> = ({ isOpen, onClose, reason }) =>
     }
   }, [isOpen]);
 
+  // Lock body scroll while modal is open (mobile stability)
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isOpen]);
+
   const formatReason = (rawReason: string | null): string => {
     if (!rawReason) return 'An unspecified safety policy was violated.';
     
@@ -42,7 +50,7 @@ const SafetyModal: React.FC<SafetyModalProps> = ({ isOpen, onClose, reason }) =>
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ease-out ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 pt-safe pb-safe overscroll-contain transition-opacity duration-300 ease-out ${
         show ? 'opacity-100' : 'opacity-0'
       }`}
       aria-labelledby="modal-title"

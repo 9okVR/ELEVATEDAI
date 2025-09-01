@@ -47,6 +47,14 @@ const TextExtractorModal: React.FC<TextExtractorModalProps> = ({ isOpen, onClose
     }
   }, [isOpen]);
   
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isOpen]);
+  
   // Reset state on close
   useEffect(() => {
       if (!isOpen) {
@@ -120,7 +128,7 @@ const TextExtractorModal: React.FC<TextExtractorModalProps> = ({ isOpen, onClose
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ease-out ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 pt-safe pb-safe overscroll-contain transition-opacity duration-300 ease-out ${
         show ? 'opacity-100' : 'opacity-0'
       }`}
       aria-labelledby="modal-title"
@@ -132,7 +140,7 @@ const TextExtractorModal: React.FC<TextExtractorModalProps> = ({ isOpen, onClose
       }`} onClick={onClose}></div>
 
       <div
-        className={`relative bg-gradient-to-br from-gray-900/95 via-purple-900/20 to-gray-900/95 backdrop-blur-2xl border border-purple-500/20 rounded-3xl shadow-2xl w-full max-w-3xl transform transition-all duration-500 ease-out flex flex-col overflow-hidden h-[90vh] max-h-[750px] ${
+        className={`relative bg-gradient-to-br from-gray-900/95 via-purple-900/20 to-gray-900/95 backdrop-blur-2xl border border-purple-500/20 rounded-3xl shadow-2xl w-full max-w-3xl transform transition-all duration-500 ease-out flex flex-col overflow-hidden h-[90vh] h-[90dvh] max-h-[750px] ${
           show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
         }`}
       >

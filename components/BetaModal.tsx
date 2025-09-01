@@ -106,6 +106,14 @@ const BetaModal: React.FC<BetaModalProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
+  // Lock body scroll while open to prevent background scroll/cropping on mobile
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isOpen]);
+
   if (!shouldRender) {
     return null;
   }
@@ -113,7 +121,7 @@ const BetaModal: React.FC<BetaModalProps> = ({ isOpen, onClose }) => {
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-500 ease-out ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 pt-safe pb-safe overscroll-contain transition-all duration-500 ease-out ${
         show ? 'opacity-100' : 'opacity-0'
       }`}
       aria-labelledby="modal-title"
