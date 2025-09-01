@@ -492,6 +492,14 @@ const AppContent: React.FC = () => {
           >
             <SettingsIcon className="w-5 h-5" />
           </button>
+          <button
+            onClick={handleGoogleOAuth}
+            className="p-2 rounded-lg bg-white text-black border border-gray-200 hover:bg-gray-100"
+            aria-label="Continue with Google"
+            title="Continue with Google"
+          >
+            <GoogleIcon className="w-4 h-4" />
+          </button>
           <div className="relative">
             <button
               onClick={() => setIsMobileMenuOpen(v => !v)}
@@ -530,15 +538,13 @@ const AppContent: React.FC = () => {
                   <DownloadIcon className="w-4 h-4" />
                   Import / Export
                 </button>
-                {!sessionEmail && (
-                  <button
-                    onClick={() => { handleGoogleOAuth(); setIsMobileMenuOpen(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left bg-white text-black border border-gray-200 hover:bg-gray-100"
-                  >
-                    <GoogleIcon className="w-4 h-4" />
-                    Continue with Google
-                  </button>
-                )}
+                <button
+                  onClick={() => { handleGoogleOAuth(); setIsMobileMenuOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left bg-white text-black border border-gray-200 hover:bg-gray-100"
+                >
+                  <GoogleIcon className="w-4 h-4" />
+                  Continue with Google
+                </button>
                 <button
                   onClick={() => { setIsExtractorModalOpen(true); setIsMobileMenuOpen(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
@@ -670,17 +676,15 @@ const AppContent: React.FC = () => {
             >
               <InfoIcon className="w-5 h-5" />
             </button>
-            {!sessionEmail && (
-              <button
-                onClick={handleGoogleOAuth}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white text-black border border-gray-200 hover:bg-gray-100"
-                aria-label="Continue with Google"
-                title="Continue with Google"
-              >
-                <GoogleIcon className="w-4 h-4" />
-                <span className="text-sm font-semibold">Google</span>
-              </button>
-            )}
+            <button
+              onClick={handleGoogleOAuth}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white text-black border border-gray-200 hover:bg-gray-100"
+              aria-label="Continue with Google"
+              title="Continue with Google"
+            >
+              <GoogleIcon className="w-4 h-4" />
+              <span className="text-sm font-semibold">Google</span>
+            </button>
             <button
               onClick={() => {
                 if (sessionEmail) {
