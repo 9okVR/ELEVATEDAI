@@ -3,6 +3,9 @@ import { supabase } from '../services/supabaseClient';
 import { saveUserApiKey } from '../services/proxyService';
 import { useSettings, FontSize, ColorScheme, LayoutMode } from '../contexts/SettingsContext';
 import { useTheme } from '../contexts/ThemeContext';
+import ModalPortal from './ModalPortal';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -78,14 +81,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
-
-  // Lock body scroll when modal is open (mobile fix)
-  useEffect(() => {
-    if (!isOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, [isOpen]);
+  // Unified body scroll lock and focus trap
+  useBodyScrollLock(isOpen);
+  useFocusTrap(modalRef as React.RefObject<HTMLDivElement>, isOpen);
 
   if (!shouldRender) return null;
 
@@ -193,16 +191,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
   );
 
   return (
-    <div 
-      className={`
-        fixed inset-0 z-[60] flex items-center justify-center p-4 pt-safe pb-safe overscroll-contain
-        transition-all duration-400 ease-out
-        ${show ? 'opacity-100' : 'opacity-0'}
-      `}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="settings-title"
-    >
+    <ModalPortal>
+      <div 
+        className={`
+          fixed inset-0 z-[60] flex items-center justify-center p-4 pt-safe pb-safe overscroll-contain
+          transition-all duration-400 ease-out
+          ${show ? 'opacity-100' : 'opacity-0'}
+        `}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-title"
+      >
       {/* Enhanced Backdrop */}
       <div 
         className={`
@@ -629,7 +628,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
           </div>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 };
 

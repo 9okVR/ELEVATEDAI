@@ -314,11 +314,11 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({
 
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
                 <h4 className="font-semibold text-blue-300 mb-2">Import Tips</h4>
-                <ul className="text-sm text-blue-200 space-y-1">
-                  <li>• JSON files preserve all data including quiz questions and metadata</li>
-                  <li>• CSV files should have "Term" and "Definition" columns</li>
-                  <li>• Importing will add to existing data, not replace it</li>
-                  <li>• Large files may take a few seconds to process</li>
+                <ul className="text-sm text-blue-200 space-y-1 list-disc pl-5">
+                  <li>JSON files preserve all data including quiz questions and metadata</li>
+                  <li>CSV files should have "Term" and "Definition" columns</li>
+                  <li>Importing will add to existing data, not replace it</li>
+                  <li>Large files may take a few seconds to process</li>
                 </ul>
               </div>
             </div>
