@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
+import GoogleIcon from './icons/GoogleIcon';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -124,9 +125,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <div className="space-y-2">
             <button
               onClick={signInWithGoogle}
-              className="w-full py-3 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 transition-colors border border-gray-200"
+              className="w-full py-3 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 transition-colors border border-gray-200 flex items-center justify-center gap-2"
             >
-              Continue with Google
+              <GoogleIcon className="w-5 h-5" />
+              <span>Continue with Google</span>
             </button>
             <button
               onClick={signInWithApple}
