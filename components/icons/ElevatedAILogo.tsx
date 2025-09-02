@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 interface LogoProps {
   className?: string;
@@ -6,6 +6,18 @@ interface LogoProps {
 }
 
 const ElevatedAILogo: React.FC<LogoProps> = ({ className = "w-12 h-12", showText = false }) => {
+  // Ensure unique IDs for gradients/filters when multiple logos render on a page
+  const uid = useId().replace(/[:]/g, '');
+  const ids = {
+    holographicGradient: `holographicGradient-${uid}`,
+    energyCore: `energyCore-${uid}`,
+    depthShadow: `depthShadow-${uid}`,
+    shimmerGradient: `shimmerGradient-${uid}`,
+    hyperGlow: `hyperGlow-${uid}`,
+    emboss3D: `emboss3D-${uid}`,
+    prismEffect: `prismEffect-${uid}`,
+  } as const;
+
   return (
     <div className={`flex items-center gap-3 ${showText ? '' : 'justify-center'}`}>
       {/* Logo Icon */}
@@ -18,7 +30,7 @@ const ElevatedAILogo: React.FC<LogoProps> = ({ className = "w-12 h-12", showText
         {/* Enhanced Gradient Definitions */}
         <defs>
           {/* Primary holographic gradient */}
-          <linearGradient id="holographicGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={ids.holographicGradient} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="var(--accent-primary, #7c3aed)" />
             <stop offset="25%" stopColor="#06b6d4" />
             <stop offset="50%" stopColor="var(--accent-secondary, #4f46e5)" />
@@ -27,7 +39,7 @@ const ElevatedAILogo: React.FC<LogoProps> = ({ className = "w-12 h-12", showText
           </linearGradient>
           
           {/* Radial energy gradient */}
-          <radialGradient id="energyCore" cx="50%" cy="50%" r="60%">
+          <radialGradient id={ids.energyCore} cx="50%" cy="50%" r="60%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
             <stop offset="30%" stopColor="#60a5fa" stopOpacity="0.9" />
             <stop offset="60%" stopColor="var(--accent-primary, #7c3aed)" stopOpacity="0.7" />
@@ -35,21 +47,21 @@ const ElevatedAILogo: React.FC<LogoProps> = ({ className = "w-12 h-12", showText
           </radialGradient>
           
           {/* Depth shadow gradient */}
-          <radialGradient id="depthShadow" cx="50%" cy="50%" r="80%">
+          <radialGradient id={ids.depthShadow} cx="50%" cy="50%" r="80%">
             <stop offset="0%" stopColor="#000000" stopOpacity="0" />
             <stop offset="70%" stopColor="#000000" stopOpacity="0.3" />
             <stop offset="100%" stopColor="#000000" stopOpacity="0.8" />
           </radialGradient>
           
           {/* Stable shimmer gradient (no animation) */}
-          <linearGradient id="shimmerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={ids.shimmerGradient} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="rgba(255,255,255,0.1)" />
             <stop offset="50%" stopColor="rgba(255,255,255,0.2)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0.1)" />
           </linearGradient>
           
           {/* Enhanced glow filter */}
-          <filter id="hyperGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <filter id={ids.hyperGlow} x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
             <feOffset dx="0" dy="0" result="offsetBlur"/>
             <feFlood floodColor="var(--accent-primary, #7c3aed)" floodOpacity="0.4"/>
@@ -61,7 +73,7 @@ const ElevatedAILogo: React.FC<LogoProps> = ({ className = "w-12 h-12", showText
           </filter>
           
           {/* 3D emboss filter */}
-          <filter id="emboss3D" x="-20%" y="-20%" width="140%" height="140%">
+          <filter id={ids.emboss3D} x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
             <feOffset dx="2" dy="2" result="offset1"/>
             <feOffset dx="-1" dy="-1" result="offset2"/>
@@ -73,7 +85,7 @@ const ElevatedAILogo: React.FC<LogoProps> = ({ className = "w-12 h-12", showText
           </filter>
           
           {/* Holographic prism effect */}
-          <filter id="prismEffect">
+          <filter id={ids.prismEffect}>
             <feColorMatrix type="matrix" values="
               1.2 0 0.2 0 0
               0.1 1.1 0.3 0 0
@@ -84,10 +96,10 @@ const ElevatedAILogo: React.FC<LogoProps> = ({ className = "w-12 h-12", showText
         </defs>
         
         {/* Stable 3D Base Shadow Layer */}
-        <ellipse cx="60" cy="70" rx="45" ry="8" fill="url(#depthShadow)" opacity="0.4" />
+        <ellipse cx="60" cy="70" rx="45" ry="8" fill={`url(#${ids.depthShadow})`} opacity="0.4" />
         
         {/* Stable Outer Energy Ring */}
-        <circle cx="60" cy="60" r="52" fill="none" stroke="url(#holographicGradient)" strokeWidth="0.5" opacity="0.2">
+        <circle cx="60" cy="60" r="52" fill="none" stroke={`url(#${ids.holographicGradient})`} strokeWidth="0.5" opacity="0.2">
           <animate attributeName="r" values="52;54;52" dur="6s" repeatCount="indefinite" />
         </circle>
         
@@ -101,13 +113,13 @@ const ElevatedAILogo: React.FC<LogoProps> = ({ className = "w-12 h-12", showText
         </g>
         
         {/* Main AI Core Structure */}
-        <g filter="url(#hyperGlow)">
+        <g filter={`url(#${ids.hyperGlow})`}>
           {/* Hexagonal energy chamber */}
           <path 
             d="M60 20 L85 35 L85 65 L60 80 L35 65 L35 35 Z" 
-            fill="url(#holographicGradient)" 
+            fill={`url(#${ids.holographicGradient})`} 
             opacity="0.8"
-            filter="url(#emboss3D)"
+            filter={`url(#${ids.emboss3D})`}
           >
             <animateTransform
               attributeName="transform"
@@ -121,7 +133,7 @@ const ElevatedAILogo: React.FC<LogoProps> = ({ className = "w-12 h-12", showText
           {/* Inner geometric layers */}
           <polygon 
             points="45,40 75,40 75,60 60,70 45,60" 
-            fill="url(#energyCore)" 
+            fill={`url(#${ids.energyCore})`} 
             opacity="0.9"
           >
             <animateTransform
@@ -134,12 +146,12 @@ const ElevatedAILogo: React.FC<LogoProps> = ({ className = "w-12 h-12", showText
           </polygon>
           
           {/* Central energy core - simplified animation */}
-          <circle cx="60" cy="50" r="12" fill="url(#energyCore)" filter="url(#prismEffect)" opacity="0.95">
+          <circle cx="60" cy="50" r="12" fill={`url(#${ids.energyCore})`} filter={`url(#${ids.prismEffect})`} opacity="0.95">
             <animate attributeName="r" values="12;13;12" dur="4s" repeatCount="indefinite" />
           </circle>
           
           {/* Neural network connections */}
-          <g stroke="url(#holographicGradient)" strokeWidth="1.5" fill="none" opacity="0.6">
+          <g stroke={`url(#${ids.holographicGradient})`} strokeWidth="1.5" fill="none" opacity="0.6">
             {/* Primary neural paths */}
             <path d="M35 45 L50 50 L60 45">
               <animate attributeName="stroke-dasharray" values="0,20;10,10;20,0;10,10;0,20" dur="3s" repeatCount="indefinite" />
@@ -157,14 +169,14 @@ const ElevatedAILogo: React.FC<LogoProps> = ({ className = "w-12 h-12", showText
           
           {/* Data flow nodes with stable glow */}
           <g opacity="0.9">
-            <circle cx="35" cy="45" r="3" fill="url(#energyCore)" filter="url(#hyperGlow)" />
-            <circle cx="85" cy="55" r="3" fill="url(#energyCore)" filter="url(#hyperGlow)" />
-            <circle cx="50" cy="35" r="3" fill="url(#energyCore)" filter="url(#hyperGlow)" />
-            <circle cx="70" cy="65" r="3" fill="url(#energyCore)" filter="url(#hyperGlow)" />
+            <circle cx="35" cy="45" r="3" fill={`url(#${ids.energyCore})`} filter={`url(#${ids.hyperGlow})`} />
+            <circle cx="85" cy="55" r="3" fill={`url(#${ids.energyCore})`} filter={`url(#${ids.hyperGlow})`} />
+            <circle cx="50" cy="35" r="3" fill={`url(#${ids.energyCore})`} filter={`url(#${ids.hyperGlow})`} />
+            <circle cx="70" cy="65" r="3" fill={`url(#${ids.energyCore})`} filter={`url(#${ids.hyperGlow})`} />
           </g>
           
           {/* Single stable energy pulse */}
-          <circle cx="60" cy="50" r="18" fill="none" stroke="url(#holographicGradient)" strokeWidth="0.5" opacity="0.3">
+          <circle cx="60" cy="50" r="18" fill="none" stroke={`url(#${ids.holographicGradient})`} strokeWidth="0.5" opacity="0.3">
             <animate attributeName="r" values="18;22;18" dur="6s" repeatCount="indefinite" />
           </circle>
         </g>

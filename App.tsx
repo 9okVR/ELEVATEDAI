@@ -709,7 +709,7 @@ const AppContent: React.FC = () => {
               style={{ animationDelay: '0.2s' }}
             >
               <div className="inline-flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
-                <div className="relative inline-flex items-center justify-center p-1.5 sm:p-2 rounded-full bg-black/40 border border-white/10 shadow-md shadow-black/40">
+                <div className="relative inline-flex items-center justify-center p-2 sm:p-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-md shadow-black/40">
                   <ElevatedAILogo className="w-12 h-12 sm:w-16 sm:h-16" showText={false} />
                 </div>
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
