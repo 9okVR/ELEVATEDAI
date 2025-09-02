@@ -43,8 +43,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
   useBodyScrollLock(isOpen);
   useFocusTrap(containerRef, isOpen);
 
-  if (!isOpen) return null;
-
+  // Hooks must run unconditionally in the same order every render
   const fontSizeOptions: { value: FontSize; label: string }[] = useMemo(() => ([
     { value: 'small', label: 'Compact' },
     { value: 'medium', label: 'Comfortable' },
@@ -66,6 +65,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
     { value: 'comfortable', label: 'Comfortable' },
     { value: 'spacious', label: 'Spacious' },
   ]), []);
+
+  // Early return now occurs after all hooks are called
+  if (!isOpen) return null;
 
   const TabButton: React.FC<{ tab: Tab; label: string; isActive: boolean }> = ({ tab, label, isActive }) => (
     <button
