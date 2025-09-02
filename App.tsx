@@ -1048,6 +1048,13 @@ const AppContent: React.FC = () => {
         [data-layout-mode="spacious"] .mb-12 {
           margin-block-end: 4rem !important;
         }
+
+        /* Smooth transitions when switching layout modes */
+        @media (prefers-reduced-motion: no-preference) {
+          .p-4, .p-6 { transition: padding 200ms ease; }
+          .gap-8 { transition: gap 200ms ease; }
+          .mb-12 { transition: margin 200ms ease; }
+        }
         
         [data-theme="light"] .min-h-screen {
           background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);

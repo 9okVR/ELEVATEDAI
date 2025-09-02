@@ -141,7 +141,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
                 <h3 className="text-xl font-semibold mb-3">Font Size</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {fontSizeOptions.map(o => (
-                    <button key={o.value} onClick={() => setFontSize(o.value)} className={`p-4 rounded-xl border transition ${fontSize===o.value ? 'bg-white/10 border-white/40' : 'bg-white/5 border-white/20 hover:bg-white/10'}`}>
+                    <button key={o.value} onClick={() => setFontSize(o.value)} className={`p-4 rounded-xl border transition-all ${fontSize===o.value ? 'bg-white/10 border-white/40' : 'bg-white/5 border-white/20 hover:bg-white/10'}`}>
                       {o.label}
                     </button>
                   ))}
@@ -152,7 +152,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
                 <h3 className="text-xl font-semibold mb-3">Layout Density</h3>
                 <div className="grid grid-cols-3 gap-3">
                   {layoutOptions.map(o => (
-                    <button key={o.value} onClick={() => setLayoutMode(o.value)} className={`p-4 rounded-xl border transition ${layoutMode===o.value ? 'bg-white/10 border-white/40' : 'bg-white/5 border-white/20 hover:bg-white/10'}`}>
+                    <button key={o.value} onClick={() => setLayoutMode(o.value)} className={`p-4 rounded-xl border transition-all ${layoutMode===o.value ? 'bg-white/10 border-white/40' : 'bg-white/5 border-white/20 hover:bg-white/10'}`}>
                       {o.label}
                     </button>
                   ))}
