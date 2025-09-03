@@ -35,7 +35,6 @@ import AuthModal from './components/AuthModal';
 import { useTheme } from './contexts/ThemeContext';
 import { supabase } from './services/supabaseClient';
 import AIInfoModal from './components/AIInfoModal';
-import GoogleIcon from './components/icons/GoogleIcon';
 
 type DocumentStatus = 'ready' | 'processing' | 'error';
 type ActiveTab = 'topics' | 'chat' | 'flashcards' | 'quiz';
@@ -148,14 +147,6 @@ const AppContent: React.FC = () => {
 
 
   // No API key checking needed in mock version
-  const handleGoogleOAuth = async () => {
-    try {
-      if (!supabase) { setIsAuthModalOpen(true); return; }
-      await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
-    } catch {
-      setIsAuthModalOpen(true);
-    }
-  };
 
   const handleCloseBetaModal = () => {
     setIsBetaModalOpen(false);
@@ -492,14 +483,6 @@ const AppContent: React.FC = () => {
           >
             <SettingsIcon className="w-5 h-5" />
           </button>
-          <button
-            onClick={handleGoogleOAuth}
-            className="p-2 rounded-lg bg-white text-black border border-gray-200 hover:bg-gray-100"
-            aria-label="Continue with Google"
-            title="Continue with Google"
-          >
-            <GoogleIcon className="w-4 h-4" />
-          </button>
           <div className="relative">
             <button
               onClick={() => setIsMobileMenuOpen(v => !v)}
@@ -537,13 +520,6 @@ const AppContent: React.FC = () => {
                 >
                   <DownloadIcon className="w-4 h-4" />
                   Import / Export
-                </button>
-                <button
-                  onClick={() => { handleGoogleOAuth(); setIsMobileMenuOpen(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left bg-white text-black border border-gray-200 hover:bg-gray-100"
-                >
-                  <GoogleIcon className="w-4 h-4" />
-                  Continue with Google
                 </button>
                 <button
                   onClick={() => { setIsExtractorModalOpen(true); setIsMobileMenuOpen(false); }}
@@ -675,15 +651,6 @@ const AppContent: React.FC = () => {
               title="How Our AI Works"
             >
               <InfoIcon className="w-5 h-5" />
-            </button>
-            <button
-              onClick={handleGoogleOAuth}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white text-black border border-gray-200 hover:bg-gray-100"
-              aria-label="Continue with Google"
-              title="Continue with Google"
-            >
-              <GoogleIcon className="w-4 h-4" />
-              <span className="text-sm font-semibold">Google</span>
             </button>
             <button
               onClick={() => {
@@ -1186,7 +1153,7 @@ const AppContent: React.FC = () => {
         }
         
         /* Extra Small breakpoint support */
-        @media (min-width: 475px) {
+        @media (min-inline-size: 475px) {
           .xs\:inline {
             display: inline !important;
           }
