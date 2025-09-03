@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Deno Edge Function: Return whether a user API key exists; optionally reveal it (with CORS)
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -71,4 +72,3 @@ serve(async (req) => {
     return bad(500, `Error getting key: ${(e as Error)?.message || e}`);
   }
 });
-
