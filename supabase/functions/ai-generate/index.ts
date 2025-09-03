@@ -64,6 +64,7 @@ serve(async (req) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) await supabase.from("usage_logs").insert([{ user_id: user.id, action: "error", status: "error", error: String(e) }]);
     } catch {}
-    return new Response("AI error", { status: 500, headers: corsHeaders });
+    const msg = (e as Error)?.message || String(e);
+    return new Response(`AI error: ${msg}`, { status: 500, headers: corsHeaders });
   }
 });
