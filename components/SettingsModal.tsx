@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { saveUserApiKey } from '../services/proxyService';
+import { saveUserApiKey, getUserApiKey } from '../services/proxyService';
 import { useSettings, FontSize, ColorScheme, LayoutMode } from '../contexts/SettingsContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
@@ -19,6 +19,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
+  const [hasServerKey, setHasServerKey] = useState<boolean | null>(null);
   const [accountMsg, setAccountMsg] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -39,6 +40,27 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
     })();
     return () => { try { unsub && unsub(); } catch {} };
   }, []);
+
+  // When modal opens on Account tab and user is signed in, fetch key (decrypted) from server
+  useEffect(() => {
+    const fetchKey = async () => {
+      try {
+        if (!isOpen || activeTab !== 'account' || !sessionEmail) return;
+        const res = await getUserApiKey({ reveal: true });
+        if (res.ok) {
+          setHasServerKey(res.hasKey);
+          if (res.apiKey) setApiKeyInput(res.apiKey);
+        }
+      } catch {}
+    };
+    fetchKey();
+    // Clear state when closing for safety
+    if (!isOpen) {
+      setApiKeyInput('');
+      setApiKeyVisible(false);
+      setHasServerKey(null);
+    }
+  }, [isOpen, activeTab, sessionEmail]);
 
   // Body scroll lock + focus trap
   useBodyScrollLock(isOpen);
@@ -197,6 +219,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
                         setAccountMsg(null);
                         const res = await saveUserApiKey(apiKeyInput.trim());
                         setAccountMsg(res.ok ? 'API key saved to your account' : `Failed to save: ${res.error}`);
+                        if (res.ok) setHasServerKey(true);
                       }}
                       className="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold"
                     >
@@ -205,6 +228,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
                     <button onClick={async () => { try { await supabase?.auth.signOut(); setApiKeyInput(''); setAccountMsg('Signed out'); } catch {} }} className="px-4 py-3 rounded-xl bg-white/10 text-white/80 hover:bg-white/20">Sign Out</button>
                   </div>
                   {accountMsg && <p className="text-sm text-purple-300">{accountMsg}</p>}
+                  {hasServerKey && !accountMsg && (
+                    <p className="text-xs text-white/60">Key on file • Stored encrypted • Not saved in browser</p>
+                  )}
                 </>
               ) : (
                 <p className="text-white/80">Use the Account button to sign in or sign up. Once signed in, you can save your Gemini API key here.</p>

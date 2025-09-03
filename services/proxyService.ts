@@ -31,6 +31,23 @@ export async function saveUserApiKey(apiKey: string): Promise<{ ok: boolean; err
   return { ok: true };
 }
 
+export async function getUserApiKey(opts?: { reveal?: boolean }): Promise<{ ok: boolean; hasKey: boolean; apiKey?: string; error?: string }>{
+  if (!canUseProxy()) return { ok: false, hasKey: false, error: 'Supabase not configured' };
+  const token = await getAccessToken();
+  if (!token) return { ok: false, hasKey: false, error: 'Not authenticated' };
+  const url = new URL(`${baseUrl}/functions/v1/get-key`);
+  if (opts?.reveal) url.searchParams.set('reveal', '1');
+  const resp = await fetch(url.toString(), { method: 'GET', headers: { 'Authorization': `Bearer ${token}` } });
+  if (!resp.ok) {
+    let body = '';
+    try { body = await resp.text(); } catch {}
+    return { ok: false, hasKey: false, error: `HTTP ${resp.status}${body ? `: ${body}` : ''}` };
+  }
+  const data = await resp.json().catch(() => null);
+  if (!data || typeof data.hasKey !== 'boolean') return { ok: false, hasKey: false, error: 'Malformed response' };
+  return { ok: true, hasKey: Boolean(data.hasKey), apiKey: data.apiKey };
+}
+
 export async function proxyGenerate(opts: {
   prompt: string;
   model: string;
