@@ -18,7 +18,17 @@ export async function saveUserApiKey(apiKey: string): Promise<{ ok: boolean; err
     },
     body: JSON.stringify({ apiKey })
   });
-  return { ok: resp.ok, error: resp.ok ? undefined : `HTTP ${resp.status}` };
+  if (!resp.ok) {
+    let body = '';
+    try { body = await resp.text(); } catch {}
+    let msg = `HTTP ${resp.status}`;
+    if (resp.status === 404) msg += ' (function not deployed or wrong URL)';
+    else if (resp.status === 401) msg += ' (not authenticated)';
+    else if (resp.status === 400) msg += body ? `: ${body}` : ' (bad request)';
+    else if (resp.status === 500) msg += body ? `: ${body}` : ' (server error)';
+    return { ok: false, error: msg };
+  }
+  return { ok: true };
 }
 
 export async function proxyGenerate(opts: {
@@ -45,4 +55,3 @@ export async function proxyGenerate(opts: {
   if (!data || typeof data.text !== 'string') return { ok: false, error: 'Malformed response' };
   return { ok: true, text: data.text };
 }
-
