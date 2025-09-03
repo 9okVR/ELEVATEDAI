@@ -18,6 +18,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [apiKeyInput, setApiKeyInput] = useState('');
+  const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const [accountMsg, setAccountMsg] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -176,12 +177,21 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
                   <p className="text-white/80">Signed in as <span className="font-semibold">{sessionEmail}</span></p>
                   <div className="flex items-center gap-2">
                     <input
-                      type="password"
+                      type={apiKeyVisible ? 'text' : 'password'}
                       value={apiKeyInput}
                       onChange={(e) => setApiKeyInput(e.target.value)}
                       placeholder="Enter your Gemini API Key"
                       className="flex-1 bg-white/5 text-white placeholder-white/40 px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                     />
+                    <button
+                      onClick={() => setApiKeyVisible(v => !v)}
+                      aria-pressed={apiKeyVisible}
+                      className="px-3 py-3 rounded-xl bg-white/10 text-white/80 hover:bg-white/20"
+                      title={apiKeyVisible ? 'Hide API key' : 'Show API key'}
+                      aria-label={apiKeyVisible ? 'Hide API key' : 'Show API key'}
+                    >
+                      {apiKeyVisible ? 'Hide' : 'Show'}
+                    </button>
                     <button
                       onClick={async () => {
                         setAccountMsg(null);
