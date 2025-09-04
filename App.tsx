@@ -36,7 +36,7 @@ import { useTheme } from './contexts/ThemeContext';
 import { supabase } from './services/supabaseClient';
 import AIInfoModal from './components/AIInfoModal';
 import HistoryModal from './components/HistoryModal';
-import { getChatSession, createChatSession, addChatMessage } from './services/historyService';
+import { getChatSession, createChatSession, addChatMessage, updateChatSession, saveFlashcardSet, saveQuiz } from './services/historyService';
 
 type DocumentStatus = 'ready' | 'processing' | 'error';
 type ActiveTab = 'topics' | 'chat' | 'flashcards' | 'quiz';
@@ -170,6 +170,8 @@ const AppContent: React.FC = () => {
         text: m.content,
       }));
       setMessages(mappedMessages);
+      if (session?.topics) setKeyTopics(session.topics);
+      if (session?.topics_sources) setKeyTopicsSources(session.topics_sources);
       if (fc?.items) setFlashcards(fc.items);
       if (qz?.items) setQuiz(qz.items);
       setIsChatActive(true);
@@ -330,13 +332,15 @@ const AppContent: React.FC = () => {
         setIsChatActive(true);
         setActiveTab('topics');
 
-        // Create a persisted session and store the initial assistant message
+        // Create a persisted session and store the initial assistant message and topics
         try {
           const created = await createChatSession({});
           if (created.ok && created.id) {
             setCurrentSessionId(created.id);
             // Persist the initial assistant message
             await addChatMessage(created.id, 'assistant', initialMessageResponse.text);
+            // Persist topics into the session if schema supports it
+            try { await updateChatSession({ id: created.id, topics: topicsResponse.text, topics_sources: topicsResponse.sources }); } catch {}
           }
         } catch (_) {
           // Non-fatal: UI continues even if persistence fails
@@ -420,6 +424,16 @@ const AppContent: React.FC = () => {
       const onProgress = (message: string) => setFlashcardLoadingMessage(message);
       const generated = await generateFlashcards(readyDocs, selectedGrade, selectedModel, onProgress, numFlashcards);
       setFlashcards(generated);
+
+      // Save flashcards and link to session
+      if (currentSessionId) {
+        try {
+          const res = await saveFlashcardSet(generated as any);
+          if (res.ok && res.id) {
+            await updateChatSession({ id: currentSessionId, flashcard_set_id: res.id });
+          }
+        } catch {}
+      }
     } catch (err) {
       if (err instanceof SafetyError) {
         setSafetyModalInfo({ isOpen: true, reason: err.message });
@@ -431,7 +445,7 @@ const AppContent: React.FC = () => {
       setIsFlashcardsLoading(false);
       setFlashcardLoadingMessage('');
     }
-  }, [documents, selectedGrade, selectedModel, numFlashcards]);
+  }, [documents, selectedGrade, selectedModel, numFlashcards, currentSessionId]);
 
   const handleGenerateQuiz = useCallback(async () => {
     const readyDocs = documents.filter(d => d.status === 'ready');
@@ -444,6 +458,16 @@ const AppContent: React.FC = () => {
       const onProgress = (message: string) => setQuizLoadingMessage(message);
       const generated = await generateQuiz(readyDocs, selectedGrade, selectedModel, onProgress, numQuizQuestions);
       setQuiz(generated);
+
+      // Save quiz and link to session
+      if (currentSessionId) {
+        try {
+          const res = await saveQuiz(generated as any);
+          if (res.ok && res.id) {
+            await updateChatSession({ id: currentSessionId, quiz_id: res.id });
+          }
+        } catch {}
+      }
     } catch (err) {
       if (err instanceof SafetyError) {
         setSafetyModalInfo({ isOpen: true, reason: err.message });
@@ -455,7 +479,7 @@ const AppContent: React.FC = () => {
       setIsQuizLoading(false);
       setQuizLoadingMessage('');
     }
-  }, [documents, selectedGrade, selectedModel, numQuizQuestions]);
+  }, [documents, selectedGrade, selectedModel, numQuizQuestions, currentSessionId]);
 
   const handleQuizAnalysis = useCallback(async (quiz: QuizQuestion[], userAnswers: Record<number, string | null>): Promise<string> => {
     if (!selectedGrade) return "Cannot analyze results without a grade level.";

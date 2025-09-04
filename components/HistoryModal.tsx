@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { listChatSessions } from '../services/historyService';
+import { listChatSessions, deleteChatSession } from '../services/historyService';
 
 interface HistoryModalProps {
   isOpen: boolean;
@@ -13,6 +13,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessions, setSessions] = useState<Array<{ id: string; created_at: string; flashcard_set_id: string | null; quiz_id: string | null }>>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -78,9 +79,33 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                       {s.flashcard_set_id ? 'Flashcards' : ''}{s.flashcard_set_id && s.quiz_id ? ' · ' : ''}{s.quiz_id ? 'Quiz' : ''}
                     </div>
                   </div>
-                  <button onClick={() => { onSelectSession(s.id); onClose(); }} className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold">
-                    Open
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { onSelectSession(s.id); onClose(); }}
+                      className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold"
+                      disabled={deletingId === s.id}
+                    >
+                      Open
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (deletingId) return;
+                        const yes = confirm('Delete this session and related flashcards/quiz? This cannot be undone.');
+                        if (!yes) return;
+                        setDeletingId(s.id);
+                        const res = await deleteChatSession(s.id, true);
+                        setDeletingId(null);
+                        if (!res.ok) {
+                          setError(res.error || 'Failed to delete');
+                        } else {
+                          setSessions(curr => curr.filter(x => x.id !== s.id));
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-white text-sm font-semibold ${deletingId === s.id ? 'bg-red-800/60 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
+                    >
+                      {deletingId === s.id ? 'Deleting…' : 'Delete'}
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -92,4 +117,3 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
 };
 
 export default HistoryModal;
-

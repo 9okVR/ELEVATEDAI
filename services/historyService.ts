@@ -42,6 +42,11 @@ export async function createChatSession(payload: { flashcard_set_id?: string | n
   return res.ok ? { ok: true, id: res.data?.id } : { ok: false, error: res.error };
 }
 
+export async function updateChatSession(payload: { id: string; flashcard_set_id?: string; quiz_id?: string; topics?: string; topics_sources?: any }): Promise<{ ok: boolean; error?: string }>{
+  const res = await call('update_session', payload);
+  return res.ok ? { ok: true } : { ok: false, error: res.error };
+}
+
 export async function addChatMessage(session_id: string, role: 'user' | 'assistant' | 'system', content: string): Promise<{ ok: boolean; error?: string }>{
   const res = await call('add_message', { session_id, role, content });
   return res.ok ? { ok: true } : { ok: false, error: res.error };
@@ -57,3 +62,7 @@ export async function getChatSession(id: string): Promise<{ ok: boolean; data?: 
   return res.ok ? { ok: true, data: res.data } : { ok: false, error: res.error };
 }
 
+export async function deleteChatSession(id: string, purge_related = true): Promise<{ ok: boolean; error?: string }>{
+  const res = await call('delete_session', { id, purge_related });
+  return res.ok ? { ok: true } : { ok: false, error: res.error };
+}

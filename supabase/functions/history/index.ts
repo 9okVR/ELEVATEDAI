@@ -72,6 +72,34 @@ serve(async (req) => {
       return new Response(JSON.stringify({ id: data.id }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    if (action === 'update_session') {
+      const id = body?.id as string | undefined;
+      if (!id) return bad(400, 'id required');
+      // Verify ownership
+      const { data: session } = await supabase
+        .from('chat_sessions')
+        .select('id,user_id')
+        .eq('id', id)
+        .eq('user_id', uid)
+        .single();
+      if (!session) return bad(404, 'Session not found');
+
+      const patch: Record<string, any> = {};
+      if (typeof body.flashcard_set_id === 'string') patch.flashcard_set_id = body.flashcard_set_id;
+      if (typeof body.quiz_id === 'string') patch.quiz_id = body.quiz_id;
+      if (typeof body.topics === 'string') patch.topics = body.topics;
+      if (body.topics_sources !== undefined) patch.topics_sources = body.topics_sources;
+      if (Object.keys(patch).length === 0) return bad(400, 'No fields to update');
+
+      const { error } = await supabase
+        .from('chat_sessions')
+        .update(patch)
+        .eq('id', id)
+        .eq('user_id', uid);
+      if (error) throw error;
+      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     if (action === 'add_message') {
       const session_id = body?.session_id as string | undefined;
       const role = body?.role as string | undefined;
@@ -108,13 +136,27 @@ serve(async (req) => {
     if (action === 'get_session') {
       const id = body?.id as string | undefined;
       if (!id) return bad(400, 'id required');
-      const { data: session } = await supabase
+      let session: any = null;
+      // Try selecting with optional topics fields; fall back if columns don't exist
+      let s = await supabase
         .from('chat_sessions')
-        .select('id, created_at, flashcard_set_id, quiz_id')
+        .select('id, created_at, flashcard_set_id, quiz_id, topics, topics_sources')
         .eq('id', id)
         .eq('user_id', uid)
         .single();
-      if (!session) return bad(404, 'Not found');
+      if (s.error) {
+        const s2 = await supabase
+          .from('chat_sessions')
+          .select('id, created_at, flashcard_set_id, quiz_id')
+          .eq('id', id)
+          .eq('user_id', uid)
+          .single();
+        session = s2.data ?? null;
+        if (!session) return bad(404, 'Not found');
+      } else {
+        session = s.data;
+        if (!session) return bad(404, 'Not found');
+      }
 
       const { data: messages } = await supabase
         .from('chat_messages')
@@ -145,10 +187,51 @@ serve(async (req) => {
       return new Response(JSON.stringify({ session, messages, flashcards, quiz }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    if (action === 'delete_session') {
+      const id = body?.id as string | undefined;
+      const purge_related = Boolean(body?.purge_related);
+      if (!id) return bad(400, 'id required');
+
+      // Verify ownership and fetch related ids
+      const { data: session } = await supabase
+        .from('chat_sessions')
+        .select('id, user_id, flashcard_set_id, quiz_id')
+        .eq('id', id)
+        .eq('user_id', uid)
+        .single();
+      if (!session) return bad(404, 'Not found');
+
+      // Optionally purge related flashcards/quizzes if they belong to the user
+      if (purge_related) {
+        if (session.flashcard_set_id) {
+          await supabase
+            .from('flashcard_sets')
+            .delete()
+            .eq('id', session.flashcard_set_id)
+            .eq('user_id', uid);
+        }
+        if (session.quiz_id) {
+          await supabase
+            .from('quizzes')
+            .delete()
+            .eq('id', session.quiz_id)
+            .eq('user_id', uid);
+        }
+      }
+
+      // Delete the session (will cascade delete messages)
+      const { error } = await supabase
+        .from('chat_sessions')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', uid);
+      if (error) throw error;
+      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     return bad(400, 'Unknown action');
   } catch (e) {
     console.error('history error:', e);
     return bad(500, `Error: ${(e as Error)?.message || e}`);
   }
 });
-
