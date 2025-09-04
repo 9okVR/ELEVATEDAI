@@ -1017,6 +1017,18 @@ ${results.map(r => `Q: ${r.question}\nCorrect: ${r.correct}\nStudent: ${r.userAn
 Prioritize referencing concepts and topics that appear in their study materials. If you extend beyond the materials, keep it concise and relevant. Format in clear text and provide a direct analysis.`;
   
   try {
+    // Prefer server proxy with the user's saved key if available
+    const modelName = getModelInfo(modelId)?.modelName || modelId;
+    if (canUseProxy()) {
+      const proxied = await proxyGenerate({
+        prompt,
+        model: modelName,
+        action: 'analysis',
+        docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0)
+      });
+      if (proxied.ok && proxied.text) return proxied.text;
+    }
+
     const response = await callGeminiAPI(prompt, { ...DEFAULT_AI_CONFIG, model: modelId });
     return response.text;
   } catch (error) {
