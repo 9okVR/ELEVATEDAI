@@ -36,7 +36,7 @@ import { useTheme } from './contexts/ThemeContext';
 import { supabase } from './services/supabaseClient';
 import AIInfoModal from './components/AIInfoModal';
 import HistoryModal from './components/HistoryModal';
-import { getChatSession } from './services/historyService';
+import { getChatSession, createChatSession, addChatMessage } from './services/historyService';
 
 type DocumentStatus = 'ready' | 'processing' | 'error';
 type ActiveTab = 'topics' | 'chat' | 'flashcards' | 'quiz';
@@ -329,6 +329,18 @@ const AppContent: React.FC = () => {
 
         setIsChatActive(true);
         setActiveTab('topics');
+
+        // Create a persisted session and store the initial assistant message
+        try {
+          const created = await createChatSession({});
+          if (created.ok && created.id) {
+            setCurrentSessionId(created.id);
+            // Persist the initial assistant message
+            await addChatMessage(created.id, 'assistant', initialMessageResponse.text);
+          }
+        } catch (_) {
+          // Non-fatal: UI continues even if persistence fails
+        }
     } catch (err: unknown) {
       if (err instanceof SafetyError) {
         setSafetyModalInfo({ isOpen: true, reason: err.message });
@@ -355,12 +367,32 @@ const AppContent: React.FC = () => {
     setMessages(updatedMessages);
 
     try {
+      // Ensure a session exists in history; create if missing
+      let sid = currentSessionId;
+      if (!sid) {
+        const created = await createChatSession({});
+        if (created.ok && created.id) {
+          sid = created.id;
+          setCurrentSessionId(sid);
+        }
+      }
+
+      // Persist the user message (fire-and-forget if no session)
+      if (sid) {
+        try { await addChatMessage(sid, 'user', message); } catch {}
+      }
+
       const readyDocs = documents.filter(d => d.status === 'ready');
       const response = isAdvancedModel
         ? await sendMessageWithDeepThink(messages, message, readyDocs, selectedGrade, collaborationModels)
         : await sendMessage(messages, message, readyDocs, selectedGrade, selectedModel);
         
       setMessages([...updatedMessages, { role: 'model', text: response.text, sources: response.sources }]);
+
+      // Persist assistant response
+      if (sid) {
+        try { await addChatMessage(sid, 'assistant', response.text); } catch {}
+      }
     } catch (err: unknown) {
         if (err instanceof SafetyError) {
           setSafetyModalInfo({ isOpen: true, reason: err.message });
@@ -375,7 +407,7 @@ const AppContent: React.FC = () => {
       setIsLoading(false);
       setLoadingMessage('');
     }
-  }, [messages, isLoading, documents, selectedGrade, selectedModel, collaborationModels]);
+  }, [messages, isLoading, documents, selectedGrade, selectedModel, collaborationModels, currentSessionId]);
 
   const handleGenerateFlashcards = useCallback(async () => {
     const readyDocs = documents.filter(d => d.status === 'ready');
@@ -449,6 +481,7 @@ const AppContent: React.FC = () => {
       setIsQuizLoading(false);
       setQuizLoadingMessage('');
       setActiveTab('topics');
+      setCurrentSessionId(null);
   }
 
   // Import handlers
