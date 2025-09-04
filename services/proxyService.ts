@@ -67,7 +67,11 @@ export async function proxyGenerate(opts: {
     },
     body: JSON.stringify(opts)
   });
-  if (!resp.ok) return { ok: false, error: `HTTP ${resp.status}` };
+  if (!resp.ok) {
+    let text = '';
+    try { text = await resp.text(); } catch {}
+    return { ok: false, error: `HTTP ${resp.status}${text ? `: ${text}` : ''}` };
+  }
   const data = await resp.json().catch(() => null);
   if (!data || typeof data.text !== 'string') return { ok: false, error: 'Malformed response' };
   return { ok: true, text: data.text };
