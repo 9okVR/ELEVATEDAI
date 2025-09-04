@@ -45,13 +45,13 @@ serve(async (req) => {
 
     const apiKey = await decrypt(settings.gemini_api_key_ciphertext);
     const genai = new GoogleGenerativeAI(apiKey);
-    const modelClient = genai.getGenerativeModel({ model, generationConfig: { temperature: 0.7, maxOutputTokens: 2048 } });
+    const generationConfig = expectJson
+      ? { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: "application/json" }
+      : { temperature: 0.7, maxOutputTokens: 2048 };
+    const modelClient = genai.getGenerativeModel({ model, generationConfig });
 
-    const payload = expectJson
-      ? { contents: [{ role: "user", parts: [{ text: prompt }]}], generationConfig: { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: "application/json" } }
-      : prompt;
-
-    const result = await modelClient.generateContent(payload as any);
+    // Pass a simple prompt; responseMimeType is controlled via generationConfig above
+    const result = await modelClient.generateContent(prompt as any);
     const text = result.response.text();
 
     await supabase.from("usage_logs").insert([
