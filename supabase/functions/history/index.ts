@@ -89,6 +89,7 @@ serve(async (req) => {
       if (typeof body.quiz_id === 'string') patch.quiz_id = body.quiz_id;
       if (typeof body.topics === 'string') patch.topics = body.topics;
       if (body.topics_sources !== undefined) patch.topics_sources = body.topics_sources;
+      if (Array.isArray(body.documents)) patch.documents = body.documents;
       if (Object.keys(patch).length === 0) return bad(400, 'No fields to update');
 
       const { error } = await supabase
@@ -137,10 +138,10 @@ serve(async (req) => {
       const id = body?.id as string | undefined;
       if (!id) return bad(400, 'id required');
       let session: any = null;
-      // Try selecting with optional topics fields; fall back if columns don't exist
+      // Try selecting with optional columns; fall back if columns don't exist
       let s = await supabase
         .from('chat_sessions')
-        .select('id, created_at, flashcard_set_id, quiz_id, topics, topics_sources')
+        .select('id, created_at, flashcard_set_id, quiz_id, topics, topics_sources, documents')
         .eq('id', id)
         .eq('user_id', uid)
         .single();

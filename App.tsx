@@ -172,6 +172,15 @@ const AppContent: React.FC = () => {
       setMessages(mappedMessages);
       if (session?.topics) setKeyTopics(session.topics);
       if (session?.topics_sources) setKeyTopicsSources(session.topics_sources);
+      if (Array.isArray(session?.documents)) {
+        const restored = (session.documents as any[]).map((d: any, i: number) => ({
+          id: Date.now() + i,
+          name: String(d.name ?? `Document ${i+1}`),
+          content: String(d.content ?? ''),
+          status: 'ready' as const,
+        }));
+        setDocuments(restored);
+      }
       if (fc?.items) setFlashcards(fc.items);
       if (qz?.items) setQuiz(qz.items);
       setIsChatActive(true);
@@ -341,6 +350,11 @@ const AppContent: React.FC = () => {
             await addChatMessage(created.id, 'assistant', initialMessageResponse.text);
             // Persist topics into the session if schema supports it
             try { await updateChatSession({ id: created.id, topics: topicsResponse.text, topics_sources: topicsResponse.sources }); } catch {}
+            // Persist documents (names + content only)
+            try {
+              const docsPayload = readyDocs.map(d => ({ name: d.name, content: d.content }));
+              await updateChatSession({ id: created.id, documents: docsPayload });
+            } catch {}
           }
         } catch (_) {
           // Non-fatal: UI continues even if persistence fails
@@ -519,6 +533,18 @@ const AppContent: React.FC = () => {
       return [...prevDocs, ...newDocs];
     });
   }, []);
+
+  // Persist documents to the session whenever they change (if a session exists)
+  useEffect(() => {
+    const sync = async () => {
+      if (!currentSessionId) return;
+      try {
+        const docsPayload = documents.filter(d => d.status === 'ready').map(d => ({ name: d.name, content: d.content }));
+        await updateChatSession({ id: currentSessionId, documents: docsPayload });
+      } catch {}
+    };
+    sync();
+  }, [documents, currentSessionId]);
 
   const handleImportFlashcards = useCallback((importedFlashcards: Flashcard[]) => {
     setFlashcards(prevCards => [...prevCards, ...importedFlashcards]);
