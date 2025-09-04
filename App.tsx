@@ -35,6 +35,8 @@ import AuthModal from './components/AuthModal';
 import { useTheme } from './contexts/ThemeContext';
 import { supabase } from './services/supabaseClient';
 import AIInfoModal from './components/AIInfoModal';
+import HistoryModal from './components/HistoryModal';
+import { getChatSession } from './services/historyService';
 
 type DocumentStatus = 'ready' | 'processing' | 'error';
 type ActiveTab = 'topics' | 'chat' | 'flashcards' | 'quiz';
@@ -125,6 +127,8 @@ const AppContent: React.FC = () => {
   const [isAIInfoModalOpen, setIsAIInfoModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const { toggleTheme } = useTheme();
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
 
@@ -151,6 +155,31 @@ const AppContent: React.FC = () => {
   const handleCloseBetaModal = () => {
     setIsBetaModalOpen(false);
   };
+
+  // Load a saved session from Supabase history
+  const handleSelectHistorySession = useCallback(async (id: string) => {
+    try {
+      const res = await getChatSession(id);
+      if (!res.ok || !res.data) {
+        setError(res.error || 'Failed to load session');
+        return;
+      }
+      const { session, messages: rawMessages, flashcards: fc, quiz: qz } = res.data as any;
+      const mappedMessages = (rawMessages || []).map((m: any) => ({
+        role: m.role === 'assistant' ? 'model' : m.role,
+        text: m.content,
+      }));
+      setMessages(mappedMessages);
+      if (fc?.items) setFlashcards(fc.items);
+      if (qz?.items) setQuiz(qz.items);
+      setIsChatActive(true);
+      setActiveTab('chat');
+      setError(null);
+      setCurrentSessionId(session?.id || id);
+    } catch (e) {
+      setError((e as Error)?.message || 'Failed to load session');
+    }
+  }, []);
 
 
 
@@ -515,6 +544,13 @@ const AppContent: React.FC = () => {
                   </span>
                 </button>
                 <button
+                  onClick={() => { setIsHistoryModalOpen(true); setIsMobileMenuOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  Chat History
+                </button>
+                <button
                   onClick={() => { setIsImportExportModalOpen(true); setIsMobileMenuOpen(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
                 >
@@ -565,6 +601,17 @@ const AppContent: React.FC = () => {
         <DownloadIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-300" />
       </button>
 
+      {/* History Button (hidden on small screens) */}
+      <button
+        onClick={() => setIsHistoryModalOpen(true)}
+        className="hidden sm:flex fixed top-28 sm:top-28 right-2 sm:right-4 z-30 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
+        aria-label="Open chat history"
+        title="History"
+      >
+        {/* clock icon */}
+        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </button>
+
       {/* AI Info Button (desktop header now handles this) */}
       <div className="hidden"></div>
 
@@ -611,6 +658,12 @@ const AppContent: React.FC = () => {
       <AIInfoModal
         isOpen={isAIInfoModalOpen}
         onClose={() => setIsAIInfoModalOpen(false)}
+      />
+
+      <HistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+        onSelectSession={handleSelectHistorySession}
       />
 
       {/* Extractor CTA (hidden on small screens) */}
