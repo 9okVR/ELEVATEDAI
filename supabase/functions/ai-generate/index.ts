@@ -48,10 +48,13 @@ serve(async (req) => {
     const generationConfig = expectJson
       ? { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: "application/json" }
       : { temperature: 0.7, maxOutputTokens: 2048 };
-    const modelClient = genai.getGenerativeModel({ model, generationConfig });
+    const modelClient = genai.getGenerativeModel({ model });
 
-    // Pass a simple prompt; responseMimeType is controlled via generationConfig above
-    const result = await modelClient.generateContent(prompt as any);
+    // Build the standard contents payload and attach generationConfig per request
+    const result = await modelClient.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }]}],
+      generationConfig,
+    } as any);
     const text = result.response.text();
 
     await supabase.from("usage_logs").insert([
