@@ -698,7 +698,7 @@ const AppContent: React.FC = () => {
       {/* History Button (mobile FAB) */}
       <button
         onClick={() => setIsHistoryModalOpen(true)}
-        className="sm:hidden fixed bottom-4 right-3 z-30 p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
+        className="sm:hidden fixed bottom-4 left-3 z-50 p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
         aria-label="Open chat history"
         title="History"
       >
