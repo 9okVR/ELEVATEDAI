@@ -695,6 +695,16 @@ const AppContent: React.FC = () => {
         <DownloadIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-300" />
       </button>
 
+      {/* History Button (mobile FAB) */}
+      <button
+        onClick={() => setIsHistoryModalOpen(true)}
+        className="sm:hidden fixed bottom-4 right-3 z-30 p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
+        aria-label="Open chat history"
+        title="History"
+      >
+        <svg className="w-6 h-6 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </button>
+
       {/* History Button (hidden on small screens) */}
       <button
         onClick={() => setIsHistoryModalOpen(true)}
