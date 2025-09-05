@@ -187,20 +187,33 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
           {activeTab === 'advanced' && (
             <div className="space-y-6 text-white/80">
               <h3 className="text-xl font-semibold">Advanced Settings</h3>
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-white/5 border border-white/10">
-                <input
-                  id="toggle-quiz-feedback"
-                  type="checkbox"
-                  checked={enableQuizFeedback}
-                  onChange={(e) => setEnableQuizFeedback(e.target.checked)}
-                  className="mt-1 h-5 w-5 accent-purple-500"
-                />
-                <label htmlFor="toggle-quiz-feedback" className="cursor-pointer">
-                  <div className="font-semibold text-white">AI Quiz Feedback</div>
-                  <div className="text-sm text-gray-400">
-                    When enabled, the app sends your quiz results to the AI to generate feedback and study tips. Disable to save API usage.
+
+              {/* AI Quiz Feedback - modern toggle */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-white/5 to-white/0 border border-white/10">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div id="ai-quiz-feedback-label" className="font-semibold text-white">AI Quiz Feedback</div>
+                    <div className="text-sm text-gray-400">
+                      Generate personalized feedback after quizzes. Turn off to save API usage.
+                    </div>
                   </div>
-                </label>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={enableQuizFeedback}
+                    aria-labelledby="ai-quiz-feedback-label"
+                    onClick={() => setEnableQuizFeedback(!enableQuizFeedback)}
+                    className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-purple-500/40 ${enableQuizFeedback ? 'bg-purple-600' : 'bg-white/20'}`}
+                    title={enableQuizFeedback ? 'Disable AI feedback' : 'Enable AI feedback'}
+                  >
+                    <span
+                      className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-lg transition-transform duration-300 ${enableQuizFeedback ? 'translate-x-8' : 'translate-x-0'}`}
+                    />
+                  </button>
+                </div>
+                <div className="mt-3 text-xs text-gray-500">
+                  Status: <span className={enableQuizFeedback ? 'text-green-400' : 'text-gray-400'}>{enableQuizFeedback ? 'On' : 'Off'}</span>
+                </div>
               </div>
             </div>
           )}
