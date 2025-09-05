@@ -15,6 +15,9 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Small sleep helper for retries
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 async function decrypt(b64: string) {
   const all = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
   const iv = all.slice(0, 12);
@@ -48,14 +51,47 @@ serve(async (req) => {
     const generationConfig = expectJson
       ? { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: "application/json" }
       : { temperature: 0.7, maxOutputTokens: 2048 };
-    const modelClient = genai.getGenerativeModel({ model });
 
-    // Build the standard contents payload and attach generationConfig per request
-    const result = await modelClient.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }]}],
-      generationConfig,
-    } as any);
-    const text = result.response.text();
+    // Try the requested model with backoff; on overload, fall back to alternates
+    const primaryModel = model || "gemini-2.5-flash";
+    const alternates = [
+      "gemini-2.5-pro",
+      "gemini-1.5-pro",
+      "gemini-1.5-flash",
+    ].filter((m) => m !== primaryModel);
+
+    const modelsToTry = [primaryModel, ...alternates];
+    let text: string | null = null;
+    let lastError: any = null;
+
+    for (const m of modelsToTry) {
+      const client = genai.getGenerativeModel({ model: m });
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const res = await client.generateContent({
+            contents: [{ role: "user", parts: [{ text: prompt }]}],
+            generationConfig,
+          } as any);
+          text = res.response.text();
+          if (text) break;
+        } catch (err) {
+          lastError = err;
+          const msg = String((err as Error)?.message || err);
+          // Retries for transient overload/timeouts only
+          const transient = /503|overloaded|Service Unavailable|timeout|temporarily/i.test(msg);
+          if (transient && attempt < 2) {
+            await sleep(400 * Math.pow(2, attempt));
+            continue;
+          }
+          break; // non-transient or max attempts for this model
+        }
+      }
+      if (text) break;
+    }
+
+    if (!text) {
+      throw lastError || new Error("Model call failed");
+    }
 
     await supabase.from("usage_logs").insert([
       { user_id: user.id, action, model, items: items ?? null, doc_bytes: docBytes ?? null, status: "ok" },
@@ -69,6 +105,8 @@ serve(async (req) => {
       if (user) await supabase.from("usage_logs").insert([{ user_id: user.id, action: "error", status: "error", error: String(e) }]);
     } catch {}
     const msg = (e as Error)?.message || String(e);
-    return new Response(`AI error: ${msg}`, { status: 500, headers: corsHeaders });
+    // If it looks like a transient overload, reflect a 503 upstream so client can retry
+    const transient = /503|overloaded|Service Unavailable|timeout|temporarily/i.test(msg);
+    return new Response(`AI error: ${msg}`, { status: transient ? 503 : 500, headers: corsHeaders });
   }
 });
