@@ -11,6 +11,8 @@ interface SettingsContextType {
   setColorScheme: (scheme: ColorScheme) => void;
   layoutMode: LayoutMode;
   setLayoutMode: (mode: LayoutMode) => void;
+  enableQuizFeedback: boolean;
+  setEnableQuizFeedback: (on: boolean) => void;
   resetToDefaults: () => void;
 }
 
@@ -18,6 +20,7 @@ const defaultSettings = {
   fontSize: 'medium' as FontSize,
   colorScheme: 'purple' as ColorScheme,
   layoutMode: 'comfortable' as LayoutMode,
+  enableQuizFeedback: true,
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -38,6 +41,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   const [fontSize, setFontSizeState] = useState<FontSize>(defaultSettings.fontSize);
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>(defaultSettings.colorScheme);
   const [layoutMode, setLayoutModeState] = useState<LayoutMode>(defaultSettings.layoutMode);
+  const [enableQuizFeedback, setEnableQuizFeedbackState] = useState<boolean>(defaultSettings.enableQuizFeedback);
   const [loadedFromStorage, setLoadedFromStorage] = useState(false);
 
   // Load settings from localStorage on mount
@@ -49,6 +53,9 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
         setFontSizeState(parsed.fontSize || defaultSettings.fontSize);
         setColorSchemeState(parsed.colorScheme || defaultSettings.colorScheme);
         setLayoutModeState(parsed.layoutMode || defaultSettings.layoutMode);
+        setEnableQuizFeedbackState(
+          typeof parsed.enableQuizFeedback === 'boolean' ? parsed.enableQuizFeedback : defaultSettings.enableQuizFeedback
+        );
         setLoadedFromStorage(true);
       } catch (error) {
         console.warn('Failed to parse saved settings, using defaults');
@@ -75,7 +82,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
 
   // Save settings to localStorage whenever they change
   const saveSettings = (newSettings: Partial<typeof defaultSettings>) => {
-    const currentSettings = { fontSize, colorScheme, layoutMode, ...newSettings };
+    const currentSettings = { fontSize, colorScheme, layoutMode, enableQuizFeedback, ...newSettings };
     localStorage.setItem('elevated-ai-settings', JSON.stringify(currentSettings));
   };
 
@@ -97,10 +104,16 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     document.documentElement.setAttribute('data-layout-mode', mode);
   };
 
+  const setEnableQuizFeedback = (on: boolean) => {
+    setEnableQuizFeedbackState(on);
+    saveSettings({ enableQuizFeedback: on });
+  };
+
   const resetToDefaults = () => {
     setFontSize(defaultSettings.fontSize);
     setColorScheme(defaultSettings.colorScheme);
     setLayoutMode(defaultSettings.layoutMode);
+    setEnableQuizFeedback(defaultSettings.enableQuizFeedback);
     localStorage.removeItem('elevated-ai-settings');
   };
 
@@ -119,6 +132,8 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
       setColorScheme,
       layoutMode,
       setLayoutMode,
+      enableQuizFeedback,
+      setEnableQuizFeedback,
       resetToDefaults,
     }}>
       {children}

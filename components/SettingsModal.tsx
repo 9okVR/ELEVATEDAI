@@ -23,7 +23,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
   const [accountMsg, setAccountMsg] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { fontSize, setFontSize, colorScheme, setColorScheme, layoutMode, setLayoutMode, resetToDefaults } = useSettings();
+  const { fontSize, setFontSize, colorScheme, setColorScheme, layoutMode, setLayoutMode, enableQuizFeedback, setEnableQuizFeedback, resetToDefaults } = useSettings();
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => { if (isOpen) setActiveTab(initialTab); }, [isOpen, initialTab]);
@@ -185,9 +185,23 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
           )}
 
           {activeTab === 'advanced' && (
-            <div className="space-y-2 text-white/80">
+            <div className="space-y-6 text-white/80">
               <h3 className="text-xl font-semibold">Advanced Settings</h3>
-              <p>Additional customization will be available soon.</p>
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-white/5 border border-white/10">
+                <input
+                  id="toggle-quiz-feedback"
+                  type="checkbox"
+                  checked={enableQuizFeedback}
+                  onChange={(e) => setEnableQuizFeedback(e.target.checked)}
+                  className="mt-1 h-5 w-5 accent-purple-500"
+                />
+                <label htmlFor="toggle-quiz-feedback" className="cursor-pointer">
+                  <div className="font-semibold text-white">AI Quiz Feedback</div>
+                  <div className="text-sm text-gray-400">
+                    When enabled, the app sends your quiz results to the AI to generate feedback and study tips. Disable to save API usage.
+                  </div>
+                </label>
+              </div>
             </div>
           )}
 

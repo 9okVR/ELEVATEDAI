@@ -33,6 +33,7 @@ import EllipsisHorizontalIcon from './components/icons/EllipsisHorizontalIcon';
 import UserIcon from './components/icons/UserIcon';
 import AuthModal from './components/AuthModal';
 import { useTheme } from './contexts/ThemeContext';
+import { useSettings } from './contexts/SettingsContext';
 import { supabase } from './services/supabaseClient';
 import AIInfoModal from './components/AIInfoModal';
 import HistoryModal from './components/HistoryModal';
@@ -495,11 +496,18 @@ const AppContent: React.FC = () => {
     }
   }, [documents, selectedGrade, selectedModel, numQuizQuestions, currentSessionId]);
 
+  const { enableQuizFeedback } = useSettings();
+
   const handleQuizAnalysis = useCallback(async (quiz: QuizQuestion[], userAnswers: Record<number, string | null>): Promise<string> => {
     if (!selectedGrade) return "Cannot analyze results without a grade level.";
-    
+    if (!enableQuizFeedback) {
+      const correct = quiz.reduce((acc, q, i) => acc + ((userAnswers[i] || null) === q.correctAnswer ? 1 : 0), 0);
+      const total = quiz.length;
+      const percent = total ? Math.round((correct / total) * 100) : 0;
+      return `Quiz Summary\n\nScore: ${correct}/${total} (${percent}%)\n\nAI feedback is disabled in Settings → Advanced.`;
+    }
     return await analyzeQuizResults(quiz, userAnswers, documents, selectedGrade, selectedModel);
-  }, [documents, selectedGrade, selectedModel]);
+  }, [documents, selectedGrade, selectedModel, enableQuizFeedback]);
 
   const handleResetSession = () => {
       setIsChatActive(false);
