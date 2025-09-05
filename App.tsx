@@ -173,6 +173,9 @@ const AppContent: React.FC = () => {
       setMessages(mappedMessages);
       if (session?.topics) setKeyTopics(session.topics);
       if (session?.topics_sources) setKeyTopicsSources(session.topics_sources);
+      if (typeof session?.grade_level === 'number') {
+        try { setSelectedGrade(session.grade_level as any); } catch {}
+      }
       if (Array.isArray(session?.documents)) {
         const restored = (session.documents as any[]).map((d: any, i: number) => ({
           id: Date.now() + i,
@@ -350,7 +353,7 @@ const AppContent: React.FC = () => {
             // Persist the initial assistant message
             await addChatMessage(created.id, 'assistant', initialMessageResponse.text);
             // Persist topics into the session if schema supports it
-            try { await updateChatSession({ id: created.id, topics: topicsResponse.text, topics_sources: topicsResponse.sources }); } catch {}
+            try { await updateChatSession({ id: created.id, topics: topicsResponse.text, topics_sources: topicsResponse.sources, grade_level: (selectedGrade as any) ?? null }); } catch {}
             // Persist documents (names + content only)
             try {
               const docsPayload = readyDocs.map(d => ({ name: d.name, content: d.content }));

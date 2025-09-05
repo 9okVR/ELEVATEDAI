@@ -63,9 +63,10 @@ serve(async (req) => {
     if (action === 'create_session') {
       const flashcard_set_id = body?.flashcard_set_id ?? null;
       const quiz_id = body?.quiz_id ?? null;
+      const grade_level = Number.isInteger(body?.grade_level) ? body.grade_level : null;
       const { data, error } = await supabase
         .from('chat_sessions')
-        .insert({ user_id: uid, flashcard_set_id, quiz_id })
+        .insert({ user_id: uid, flashcard_set_id, quiz_id, grade_level })
         .select('id')
         .single();
       if (error) throw error;
@@ -90,6 +91,8 @@ serve(async (req) => {
       if (typeof body.topics === 'string') patch.topics = body.topics;
       if (body.topics_sources !== undefined) patch.topics_sources = body.topics_sources;
       if (Array.isArray(body.documents)) patch.documents = body.documents;
+      if (Number.isInteger(body?.grade_level)) patch.grade_level = body.grade_level;
+      if (body?.grade_level === null) patch.grade_level = null;
       if (Object.keys(patch).length === 0) return bad(400, 'No fields to update');
 
       const { error } = await supabase
@@ -126,7 +129,7 @@ serve(async (req) => {
       const limit = Math.min(Math.max(parseInt(body?.limit ?? '20'), 1), 100);
       const { data, error } = await supabase
         .from('chat_sessions')
-        .select('id, created_at, flashcard_set_id, quiz_id')
+        .select('id, created_at, flashcard_set_id, quiz_id, grade_level')
         .eq('user_id', uid)
         .order('created_at', { ascending: false })
         .limit(limit);
@@ -141,7 +144,7 @@ serve(async (req) => {
       // Try selecting with optional columns; fall back if columns don't exist
       let s = await supabase
         .from('chat_sessions')
-        .select('id, created_at, flashcard_set_id, quiz_id, topics, topics_sources, documents')
+        .select('id, created_at, flashcard_set_id, quiz_id, topics, topics_sources, documents, grade_level')
         .eq('id', id)
         .eq('user_id', uid)
         .single();

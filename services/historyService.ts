@@ -37,12 +37,12 @@ export async function saveQuiz(items: any[], results?: any): Promise<{ ok: boole
   return res.ok ? { ok: true, id: res.data?.id } : { ok: false, error: res.error };
 }
 
-export async function createChatSession(payload: { flashcard_set_id?: string | null; quiz_id?: string | null }): Promise<{ ok: boolean; id?: string; error?: string }>{
+export async function createChatSession(payload: { flashcard_set_id?: string | null; quiz_id?: string | null; grade_level?: number | null }): Promise<{ ok: boolean; id?: string; error?: string }>{
   const res = await call('create_session', payload);
   return res.ok ? { ok: true, id: res.data?.id } : { ok: false, error: res.error };
 }
 
-export async function updateChatSession(payload: { id: string; flashcard_set_id?: string; quiz_id?: string; topics?: string; topics_sources?: any; documents?: any[] }): Promise<{ ok: boolean; error?: string }>{
+export async function updateChatSession(payload: { id: string; flashcard_set_id?: string; quiz_id?: string; topics?: string; topics_sources?: any; documents?: any[]; grade_level?: number | null }): Promise<{ ok: boolean; error?: string }>{
   const res = await call('update_session', payload);
   return res.ok ? { ok: true } : { ok: false, error: res.error };
 }
