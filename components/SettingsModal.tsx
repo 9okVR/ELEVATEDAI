@@ -188,31 +188,44 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
             <div className="space-y-6 text-white/80">
               <h3 className="text-xl font-semibold">Advanced Settings</h3>
 
-              {/* AI Quiz Feedback - modern toggle */}
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-white/5 to-white/0 border border-white/10">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <div id="ai-quiz-feedback-label" className="font-semibold text-white">AI Quiz Feedback</div>
-                    <div className="text-sm text-gray-400">
-                      Generate personalized feedback after quizzes. Turn off to save API usage.
+              {/* AI Quiz Feedback - sleek glass card with neon switch */}
+              <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-purple-600/30 via-indigo-600/30 to-emerald-500/30">
+                <div className="rounded-2xl bg-black/30 backdrop-blur-sm border border-white/10 p-5">
+                  <div className="flex items-center justify-between gap-6">
+                    <div className="min-w-0">
+                      <div id="ai-quiz-feedback-label" className="font-semibold text-white">AI Quiz Feedback</div>
+                      <div className="text-sm text-gray-400 leading-snug">
+                        Generate personalized feedback after quizzes. Turn this off to save API usage.
+                      </div>
                     </div>
+
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={enableQuizFeedback}
+                      aria-labelledby="ai-quiz-feedback-label"
+                      onClick={() => setEnableQuizFeedback(!enableQuizFeedback)}
+                      className={`relative inline-flex h-9 w-18 sm:w-20 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-4 ${enableQuizFeedback ? 'bg-gradient-to-r from-purple-600 to-indigo-600 focus:ring-purple-500/40 shadow-lg shadow-purple-500/30' : 'bg-white/15 focus:ring-white/20'} hover:brightness-110`}
+                      title={enableQuizFeedback ? 'Disable AI feedback' : 'Enable AI feedback'}
+                    >
+                      <span
+                        className={`absolute left-1 top-1 h-7 w-7 rounded-full bg-white shadow-lg transition-transform duration-300 will-change-transform flex items-center justify-center ${enableQuizFeedback ? 'translate-x-9 sm:translate-x-10' : 'translate-x-0'}`}
+                      >
+                        {enableQuizFeedback ? (
+                          <svg viewBox="0 0 24 24" className="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                        ) : (
+                          <svg viewBox="0 0 24 24" className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                        )}
+                      </span>
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={enableQuizFeedback}
-                    aria-labelledby="ai-quiz-feedback-label"
-                    onClick={() => setEnableQuizFeedback(!enableQuizFeedback)}
-                    className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-purple-500/40 ${enableQuizFeedback ? 'bg-purple-600' : 'bg-white/20'}`}
-                    title={enableQuizFeedback ? 'Disable AI feedback' : 'Enable AI feedback'}
-                  >
-                    <span
-                      className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-lg transition-transform duration-300 ${enableQuizFeedback ? 'translate-x-8' : 'translate-x-0'}`}
-                    />
-                  </button>
-                </div>
-                <div className="mt-3 text-xs text-gray-500">
-                  Status: <span className={enableQuizFeedback ? 'text-green-400' : 'text-gray-400'}>{enableQuizFeedback ? 'On' : 'Off'}</span>
+
+                  <div className="mt-3 text-xs">
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border ${enableQuizFeedback ? 'text-green-300 border-green-500/30 bg-green-500/10' : 'text-gray-300 border-white/10 bg-white/5'}`}>
+                      <span className={`h-2 w-2 rounded-full ${enableQuizFeedback ? 'bg-green-400' : 'bg-gray-400'}`}></span>
+                      {enableQuizFeedback ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
