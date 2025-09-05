@@ -797,6 +797,17 @@ Only return the JSON array, no other text. Do not add explanations, notes, discl
   try {
     // Prefer server proxy if user is signed in (per-user key + logging)
     const modelName = getModelInfo(modelId)?.modelName || modelId;
+    const combine = (a: Flashcard[] = [], b: Flashcard[] = []) => {
+      const seen = new Set(a.map(c => (c.term || '').trim().toLowerCase()))
+      for (const c of b) {
+        const key = (c?.term || '').trim().toLowerCase()
+        if (!key || seen.has(key)) continue
+        a.push({ term: c.term, definition: c.definition })
+        seen.add(key)
+        if (a.length >= numFlashcards) break
+      }
+      return a
+    }
     if (canUseProxy()) {
       onProgress('Generating flashcards with your account...');
       const proxied = await proxyGenerate({
@@ -808,8 +819,27 @@ Only return the JSON array, no other text. Do not add explanations, notes, discl
         docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0)
       });
       if (proxied.ok && proxied.text) {
-        let fc = extractJsonArray<Flashcard>(proxied.text);
-        if (fc && fc.length > 0) return fc.slice(0, numFlashcards);
+        let all = extractJsonArray<Flashcard>(proxied.text) || [];
+        if (all.length >= numFlashcards) return all.slice(0, numFlashcards);
+        if (all.length > 0 && all.length < numFlashcards) {
+          const remaining = numFlashcards - all.length;
+          const used = all.map(c => c.term).filter(Boolean).join('\n- ');
+          const topUpInstruction = `Generate exactly ${remaining} additional flashcards that DO NOT repeat any of the following terms:\n- ${used}\n\nReturn ONLY a JSON array with objects {"term","definition"}.`;
+          const topUpPrompt = buildPromptWithDocumentsTokenAware(documents, gradeLevel, topUpInstruction);
+          const next = await proxyGenerate({
+            prompt: topUpPrompt,
+            model: modelName,
+            expectJson: true,
+            action: 'flashcards',
+            items: remaining,
+            docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0)
+          });
+          if (next.ok && next.text) {
+            const extra = extractJsonArray<Flashcard>(next.text) || [];
+            all = combine(all, extra);
+          }
+          if (all.length > 0) return all.slice(0, numFlashcards);
+        }
         // Try conversion via proxy
         onProgress('Formatting results...');
         const conv = await proxyGenerate({
@@ -819,8 +849,20 @@ Only return the JSON array, no other text. Do not add explanations, notes, discl
           action: 'flashcards'
         });
         if (conv.ok && conv.text) {
-          fc = extractJsonArray<Flashcard>(conv.text);
-          if (fc && fc.length > 0) return fc.slice(0, numFlashcards);
+          let all2 = extractJsonArray<Flashcard>(conv.text) || [];
+          if (all2.length >= numFlashcards) return all2.slice(0, numFlashcards);
+          if (all2.length > 0) {
+            const remaining = numFlashcards - all2.length;
+            const used = all2.map(c => c.term).filter(Boolean).join('\n- ');
+            const topUpInstruction = `Generate exactly ${remaining} additional flashcards that DO NOT repeat any of the following terms:\n- ${used}\n\nReturn ONLY a JSON array with objects {"term","definition"}.`;
+            const topUpPrompt = buildPromptWithDocumentsTokenAware(documents, gradeLevel, topUpInstruction);
+            const next = await proxyGenerate({ prompt: topUpPrompt, model: modelName, expectJson: true, action: 'flashcards', items: remaining, docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0) });
+            if (next.ok && next.text) {
+              const extra = extractJsonArray<Flashcard>(next.text) || [];
+              all2 = combine(all2, extra);
+            }
+            if (all2.length > 0) return all2.slice(0, numFlashcards);
+          }
         }
       }
     }
@@ -828,9 +870,20 @@ Only return the JSON array, no other text. Do not add explanations, notes, discl
     onProgress('Generating flashcards with AI...');
     // Attempt 1: standard call (no JSON mode), then parse flexibly
     const response = await callGeminiAPI(prompt, { ...DEFAULT_AI_CONFIG, model: modelId });
-    let flashcards = extractJsonArray<Flashcard>(response.text);
-    if (flashcards && flashcards.length > 0) {
-      return flashcards.slice(0, numFlashcards);
+    let flashcards = extractJsonArray<Flashcard>(response.text) || [];
+    if (flashcards.length > 0) {
+      if (flashcards.length >= numFlashcards) return flashcards.slice(0, numFlashcards);
+      const remaining = numFlashcards - flashcards.length;
+      const used = flashcards.map(c => c.term).filter(Boolean).join('\n- ');
+      const compactPrompt = buildPromptWithDocumentsTokenAware(
+        documents,
+        gradeLevel,
+        `Generate exactly ${remaining} additional flashcards that do not repeat any of these terms:\n- ${used}\n\nReturn only a JSON array of {"term","definition"}.`
+      );
+      const more = await callGeminiAPI(compactPrompt, { ...DEFAULT_AI_CONFIG, model: modelId });
+      const add = extractJsonArray<Flashcard>(more.text) || [];
+      flashcards = combine(flashcards, add);
+      if (flashcards.length > 0) return flashcards.slice(0, numFlashcards);
     }
     
     // Attempt 1b: ask for a compact, line-delimited format and parse it
@@ -871,11 +924,12 @@ Only return the JSON array, no other text. Do not add explanations, notes, discl
     const freeform = await callAI(prompt, modelId);
     if (freeform.text) {
       const convertPrompt = `Convert the following content to a JSON array of objects with strictly these keys: "term" (string) and "definition" (string). Do not include any extra keys or wrapper objects. Only output the JSON array, nothing else.\n\nCONTENT:\n${freeform.text}`;
-      const normalized = await callGeminiAPI(convertPrompt, { ...DEFAULT_AI_CONFIG, model: modelId }, 'application/json');
-      const converted = extractJsonArray<Flashcard>(normalized.text);
-      if (converted && converted.length > 0) {
-        return converted.slice(0, numFlashcards);
-      }
+    const normalized = await callGeminiAPI(convertPrompt, { ...DEFAULT_AI_CONFIG, model: modelId }, 'application/json');
+    const converted = extractJsonArray<Flashcard>(normalized.text) || [];
+    if (converted.length > 0) {
+      if (converted.length >= numFlashcards) return converted.slice(0, numFlashcards);
+      return converted;
+    }
     }
     
     // Fallback if JSON parsing fails
