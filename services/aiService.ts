@@ -929,7 +929,27 @@ Only return the JSON array, no other text. Do not add explanations, notes, discl
       });
       if (proxied.ok && proxied.text) {
         let qq = extractJsonArray<QuizQuestion>(proxied.text);
-        if (qq && qq.length > 0) return qq.slice(0, numQuestions);
+        if (qq && qq.length > 0) {
+          if (qq.length >= numQuestions) return qq.slice(0, numQuestions);
+          // Top-up: request remaining questions without repeating
+          const remaining = numQuestions - qq.length;
+          const used = qq.map(q => q.question).join('\n- ');
+          const topUpInstruction = `Generate exactly ${remaining} additional multiple choice quiz questions that DO NOT repeat any of the following questions:\n- ${used}\n\nReturn ONLY a JSON array with objects {"question","options":[4],"correctAnswer","explanation"}.`;
+          const topUpPrompt = buildPromptWithDocumentsTokenAware(documents, gradeLevel, topUpInstruction);
+          const next = await proxyGenerate({ prompt: topUpPrompt, model: modelName, expectJson: true, action: 'quiz', items: remaining, docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0) });
+          if (next.ok && next.text) {
+            const extra = extractJsonArray<QuizQuestion>(next.text) || [];
+            const seen = new Set(qq.map(q => (q.question||'').trim().toLowerCase()));
+            for (const q of extra) {
+              const key = (q?.question||'').trim().toLowerCase();
+              if (!key || seen.has(key)) continue;
+              qq.push(q);
+              seen.add(key);
+              if (qq.length >= numQuestions) break;
+            }
+          }
+          if (qq.length > 0) return qq.slice(0, numQuestions);
+        }
         onProgress('Formatting results...');
         const conv = await proxyGenerate({
           prompt: `Convert the following content to a JSON array of quiz questions with strictly these keys: "question" (string), "options" (array of 4 strings), "correctAnswer" (string equal to one of the options), and "explanation" (string). Only output the JSON array.\n\nCONTENT:\n${proxied.text}`,
@@ -939,7 +959,27 @@ Only return the JSON array, no other text. Do not add explanations, notes, discl
         });
         if (conv.ok && conv.text) {
           qq = extractJsonArray<QuizQuestion>(conv.text);
-          if (qq && qq.length > 0) return qq.slice(0, numQuestions);
+          if (qq && qq.length > 0) {
+            if (qq.length >= numQuestions) return qq.slice(0, numQuestions);
+            // Top-up same as above
+            const remaining = numQuestions - qq.length;
+            const used = qq.map(q => q.question).join('\n- ');
+            const topUpInstruction = `Generate exactly ${remaining} additional multiple choice quiz questions that DO NOT repeat any of the following questions:\n- ${used}\n\nReturn ONLY a JSON array with objects {"question","options":[4],"correctAnswer","explanation"}.`;
+            const topUpPrompt = buildPromptWithDocumentsTokenAware(documents, gradeLevel, topUpInstruction);
+            const next = await proxyGenerate({ prompt: topUpPrompt, model: modelName, expectJson: true, action: 'quiz', items: remaining, docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0) });
+            if (next.ok && next.text) {
+              const extra = extractJsonArray<QuizQuestion>(next.text) || [];
+              const seen = new Set(qq.map(q => (q.question||'').trim().toLowerCase()));
+              for (const q of extra) {
+                const key = (q?.question||'').trim().toLowerCase();
+                if (!key || seen.has(key)) continue;
+                qq.push(q);
+                seen.add(key);
+                if (qq.length >= numQuestions) break;
+              }
+            }
+            if (qq.length > 0) return qq.slice(0, numQuestions);
+          }
         }
       }
     }
@@ -949,7 +989,21 @@ Only return the JSON array, no other text. Do not add explanations, notes, discl
     const response = await callGeminiAPI(prompt, { ...DEFAULT_AI_CONFIG, model: modelId });
     let questions = extractJsonArray<QuizQuestion>(response.text);
     if (questions && questions.length > 0) {
-      return questions.slice(0, numQuestions);
+      if (questions.length >= numQuestions) return questions.slice(0, numQuestions);
+      const remaining = numQuestions - questions.length;
+      const used = questions.map(q => q.question).join('\n- ');
+      const convertPrompt = `Generate exactly ${remaining} additional multiple choice quiz questions that do not repeat any of the following:\n- ${used}\n\nReturn ONLY a JSON array with keys: question, options (4), correctAnswer, explanation.`;
+      const normalized = await callGeminiAPI(convertPrompt, { ...DEFAULT_AI_CONFIG, model: modelId });
+      const extra = extractJsonArray<QuizQuestion>(normalized.text) || [];
+      const seen = new Set(questions.map(q => (q.question||'').trim().toLowerCase()));
+      for (const q of extra) {
+        const key = (q?.question||'').trim().toLowerCase();
+        if (!key || seen.has(key)) continue;
+        questions.push(q);
+        seen.add(key);
+        if (questions.length >= numQuestions) break;
+      }
+      if (questions.length > 0) return questions.slice(0, numQuestions);
     }
     
     // Attempt 2: ask model to convert to strict JSON array, then parse

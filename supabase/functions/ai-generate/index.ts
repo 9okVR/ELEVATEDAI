@@ -49,8 +49,8 @@ serve(async (req) => {
     const apiKey = await decrypt(settings.gemini_api_key_ciphertext);
     const genai = new GoogleGenerativeAI(apiKey);
     const generationConfig = expectJson
-      ? { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: "application/json" }
-      : { temperature: 0.7, maxOutputTokens: 2048 };
+      ? { temperature: 0.7, maxOutputTokens: 4096, responseMimeType: "application/json" }
+      : { temperature: 0.7, maxOutputTokens: 3072 };
 
     // Try the requested model with backoff; on overload, fall back to alternates
     const primaryModel = model || "gemini-2.5-flash";
