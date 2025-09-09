@@ -20,6 +20,10 @@ create table if not exists chat_sessions (
   user_id uuid not null references auth.users(id) on delete cascade,
   flashcard_set_id uuid references flashcard_sets(id) on delete set null,
   quiz_id uuid references quizzes(id) on delete set null,
+  grade_level integer,
+  topics text,
+  topics_sources jsonb,
+  documents jsonb,
   -- Optional display title and lightweight activity summary
   title text,
   last_message_at timestamptz,
@@ -31,6 +35,10 @@ create table if not exists chat_sessions (
 alter table if exists chat_sessions add column if not exists title text;
 alter table if exists chat_sessions add column if not exists last_message_at timestamptz;
 alter table if exists chat_sessions add column if not exists message_count integer not null default 0;
+alter table if exists chat_sessions add column if not exists grade_level integer;
+alter table if exists chat_sessions add column if not exists topics text;
+alter table if exists chat_sessions add column if not exists topics_sources jsonb;
+alter table if exists chat_sessions add column if not exists documents jsonb;
 
 create table if not exists chat_messages (
   id bigserial primary key,
@@ -48,14 +56,22 @@ alter table chat_sessions enable row level security;
 alter table chat_messages enable row level security;
 
 -- Policies: user can manage own rows
-create policy if not exists "flashcards_own" on flashcard_sets
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+do $$ begin
+  create policy "flashcards_own" on flashcard_sets
+    for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+exception when duplicate_object then null; end $$;
 
-create policy if not exists "quizzes_own" on quizzes
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+do $$ begin
+  create policy "quizzes_own" on quizzes
+    for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+exception when duplicate_object then null; end $$;
 
-create policy if not exists "sessions_own" on chat_sessions
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+do $$ begin
+  create policy "sessions_own" on chat_sessions
+    for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+exception when duplicate_object then null; end $$;
 
-create policy if not exists "messages_own" on chat_messages
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+do $$ begin
+  create policy "messages_own" on chat_messages
+    for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+exception when duplicate_object then null; end $$;
