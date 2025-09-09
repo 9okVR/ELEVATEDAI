@@ -20,8 +20,17 @@ create table if not exists chat_sessions (
   user_id uuid not null references auth.users(id) on delete cascade,
   flashcard_set_id uuid references flashcard_sets(id) on delete set null,
   quiz_id uuid references quizzes(id) on delete set null,
+  -- Optional display title and lightweight activity summary
+  title text,
+  last_message_at timestamptz,
+  message_count integer not null default 0,
   created_at timestamptz default now()
 );
+
+-- In case the table already exists, ensure new columns are present
+alter table if exists chat_sessions add column if not exists title text;
+alter table if exists chat_sessions add column if not exists last_message_at timestamptz;
+alter table if exists chat_sessions add column if not exists message_count integer not null default 0;
 
 create table if not exists chat_messages (
   id bigserial primary key,
@@ -50,4 +59,3 @@ create policy if not exists "sessions_own" on chat_sessions
 
 create policy if not exists "messages_own" on chat_messages
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-

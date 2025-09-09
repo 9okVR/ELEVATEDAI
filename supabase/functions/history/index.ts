@@ -15,6 +15,28 @@ const corsHeaders = {
 
 const bad = (status: number, msg: string) => new Response(msg, { status, headers: corsHeaders });
 
+// Helper: derive a short, human-friendly title from first user message
+function deriveTitle(text: string, maxLen = 80): string {
+  try {
+    let t = String(text || "");
+    // Collapse whitespace and strip rudimentary markdown fences
+    t = t.replace(/```[\s\S]*?```/g, "").replace(/`([^`]+)`/g, "$1");
+    t = t.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+    // Take first sentence-ish break
+    const stop = Math.min(
+      ...[". ", "? ", "! ", "\n"].map((s) => {
+        const i = t.indexOf(s);
+        return i === -1 ? Number.MAX_SAFE_INTEGER : i + s.length - 1;
+      })
+    );
+    if (stop !== Number.MAX_SAFE_INTEGER) t = t.slice(0, stop);
+    if (t.length > maxLen) t = t.slice(0, maxLen - 1) + "…";
+    return t || "New chat";
+  } catch {
+    return "New chat";
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
   try {
@@ -64,9 +86,10 @@ serve(async (req) => {
       const flashcard_set_id = body?.flashcard_set_id ?? null;
       const quiz_id = body?.quiz_id ?? null;
       const grade_level = Number.isInteger(body?.grade_level) ? body.grade_level : null;
+      const title = typeof body?.title === 'string' && body.title.trim() ? String(body.title).slice(0, 120) : null;
       const { data, error } = await supabase
         .from('chat_sessions')
-        .insert({ user_id: uid, flashcard_set_id, quiz_id, grade_level })
+        .insert({ user_id: uid, flashcard_set_id, quiz_id, grade_level, title })
         .select('id')
         .single();
       if (error) throw error;
@@ -93,6 +116,7 @@ serve(async (req) => {
       if (Array.isArray(body.documents)) patch.documents = body.documents;
       if (Number.isInteger(body?.grade_level)) patch.grade_level = body.grade_level;
       if (body?.grade_level === null) patch.grade_level = null;
+      if (typeof body.title === 'string') patch.title = body.title.slice(0, 120);
       if (Object.keys(patch).length === 0) return bad(400, 'No fields to update');
 
       const { error } = await supabase
@@ -110,29 +134,68 @@ serve(async (req) => {
       const content = body?.content as string | undefined;
       if (!session_id || !role || !content) return bad(400, 'session_id, role, content required');
       // Verify ownership of the session
-      const { data: session } = await supabase
+      let supportsSummary = true;
+      let { data: session, error: sessErr } = await supabase
         .from('chat_sessions')
-        .select('id,user_id')
+        .select('id,user_id,title,message_count')
         .eq('id', session_id)
         .eq('user_id', uid)
         .single();
+      if (sessErr) {
+        // Fallback for schemas without the new columns
+        supportsSummary = false;
+        const fallback = await supabase
+          .from('chat_sessions')
+          .select('id,user_id')
+          .eq('id', session_id)
+          .eq('user_id', uid)
+          .single();
+        session = fallback.data as any;
+      }
       if (!session) return bad(404, 'Session not found');
 
       const { error } = await supabase
         .from('chat_messages')
         .insert({ session_id, user_id: uid, role, content });
       if (error) throw error;
+      // Update session summary fields
+      if (supportsSummary) {
+        const patch: Record<string, any> = {
+          last_message_at: new Date().toISOString(),
+          message_count: (session as any)?.message_count != null ? (session as any).message_count + 1 : 1,
+        };
+        if (!(session as any)?.title || String((session as any).title).trim() === '') {
+          if (role === 'user') patch.title = deriveTitle(content);
+        }
+        const { error: updErr } = await supabase
+          .from('chat_sessions')
+          .update(patch)
+          .eq('id', session_id)
+          .eq('user_id', uid);
+        if (updErr) throw updErr;
+      }
       return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'list_sessions') {
       const limit = Math.min(Math.max(parseInt(body?.limit ?? '20'), 1), 100);
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('chat_sessions')
-        .select('id, created_at, flashcard_set_id, quiz_id, grade_level')
+        .select('id, created_at, flashcard_set_id, quiz_id, grade_level, title, last_message_at, message_count')
         .eq('user_id', uid)
         .order('created_at', { ascending: false })
         .limit(limit);
+      if (error) {
+        // Fallback for older schema without new columns
+        const fallback = await supabase
+          .from('chat_sessions')
+          .select('id, created_at, flashcard_set_id, quiz_id, grade_level')
+          .eq('user_id', uid)
+          .order('created_at', { ascending: false })
+          .limit(limit);
+        data = fallback.data as any;
+        error = fallback.error as any;
+      }
       if (error) throw error;
       return new Response(JSON.stringify({ sessions: data }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
@@ -144,7 +207,7 @@ serve(async (req) => {
       // Try selecting with optional columns; fall back if columns don't exist
       let s = await supabase
         .from('chat_sessions')
-        .select('id, created_at, flashcard_set_id, quiz_id, topics, topics_sources, documents, grade_level')
+        .select('id, created_at, flashcard_set_id, quiz_id, topics, topics_sources, documents, grade_level, title, last_message_at, message_count')
         .eq('id', id)
         .eq('user_id', uid)
         .single();
