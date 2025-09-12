@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { listChatSessions, deleteChatSession } from '../services/historyService';
 
 interface HistoryModalProps {
@@ -14,6 +14,11 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
   const [error, setError] = useState<string | null>(null);
   const [sessions, setSessions] = useState<Array<{ id: string; created_at: string; flashcard_set_id: string | null; quiz_id: string | null }>>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const allSelected = useMemo(() => sessions.length > 0 && selectedIds.size === sessions.length, [sessions, selectedIds]);
+  const hasSelection = selectedIds.size > 0;
 
   useEffect(() => {
     if (isOpen) {
@@ -36,8 +41,11 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
       if (!res.ok) {
         setError(res.error || 'Failed to load sessions');
         setSessions([]);
+        setSelectedIds(new Set());
       } else {
-        setSessions(res.sessions || []);
+        const list = res.sessions || [];
+        setSessions(list);
+        setSelectedIds(prev => new Set(Array.from(prev).filter(id => list.some(s => s.id === id))));
       }
       setLoading(false);
     })();
@@ -53,15 +61,64 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
       />
       <div className={`absolute inset-0 flex items-center justify-center p-4`}>
         <div className={`w-full max-w-lg bg-gray-900/95 border border-white/10 rounded-2xl shadow-xl backdrop-blur-xl transition-all duration-200 ${show ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
-          <div className="p-4 border-b border-white/10 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Chat History</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-white" aria-label="Close">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
+          <div className="p-4 border-b border-white/10 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold text-white">Chat History</h2>
+              {sessions.length > 0 && (
+                <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-white/20 bg-white/10"
+                    checked={allSelected}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedIds(new Set(sessions.map(s => s.id)));
+                      else setSelectedIds(new Set());
+                    }}
+                  />
+                  <span>{allSelected ? 'Unselect All' : 'Select All'}</span>
+                </label>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={async () => {
+                  if (!hasSelection || bulkDeleting) return;
+                  const count = selectedIds.size;
+                  const yes = confirm(`Delete ${count} selected session${count === 1 ? '' : 's'} and related flashcards/quiz? This cannot be undone.`);
+                  if (!yes) return;
+                  setBulkDeleting(true);
+                  setError(null);
+                  const ids = Array.from(selectedIds);
+                  const failures: string[] = [];
+                  for (const id of ids) {
+                    try {
+                      const res = await deleteChatSession(id, true);
+                      if (!res.ok) failures.push(id);
+                    } catch {
+                      failures.push(id);
+                    }
+                  }
+                  setBulkDeleting(false);
+                  if (failures.length > 0) {
+                    setError(`Failed to delete ${failures.length} item(s). Please try again.`);
+                  }
+                  setSessions(curr => curr.filter(s => !selectedIds.has(s.id)));
+                  setSelectedIds(new Set());
+                }}
+                disabled={!hasSelection || bulkDeleting}
+                className={`px-3 py-1.5 rounded-lg text-white text-sm font-semibold ${hasSelection && !bulkDeleting ? 'bg-red-600 hover:bg-red-700' : 'bg-red-800/60 cursor-not-allowed'}`}
+                aria-disabled={!hasSelection || bulkDeleting}
+              >
+                {bulkDeleting ? 'Deleting...' : hasSelection ? `Delete Selected (${selectedIds.size})` : 'Delete Selected'}
+              </button>
+              <button onClick={onClose} className="text-gray-400 hover:text-white" aria-label="Close">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
           </div>
           <div className="p-4 max-h-[60vh] overflow-y-auto">
             {loading && (
-              <div className="text-gray-400">Loading sessions…</div>
+              <div className="text-gray-400">Loading sessions...</div>
             )}
             {error && (
               <div className="text-red-300 bg-red-500/10 border border-red-500/20 p-3 rounded-lg">{error}</div>
@@ -72,11 +129,26 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
             <ul className="space-y-2">
               {sessions.map((s) => (
                 <li key={s.id} className="flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-xl border border-white/10">
-                  <div className="text-sm">
-                    <div className="text-white font-medium">Session {s.id.slice(0, 8)}</div>
-                    <div className="text-gray-400">{new Date(s.created_at).toLocaleString()}</div>
-                    <div className="text-gray-500 text-xs">
-                      {s.flashcard_set_id ? 'Flashcards' : ''}{s.flashcard_set_id && s.quiz_id ? ' · ' : ''}{s.quiz_id ? 'Quiz' : ''}
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-white/20 bg-white/10"
+                      checked={selectedIds.has(s.id)}
+                      onChange={(e) => {
+                        setSelectedIds(prev => {
+                          const next = new Set(prev);
+                          if (e.target.checked) next.add(s.id); else next.delete(s.id);
+                          return next;
+                        });
+                      }}
+                      aria-label={`Select session ${s.id.slice(0,8)}`}
+                    />
+                    <div className="text-sm">
+                      <div className="text-white font-medium">Session {s.id.slice(0, 8)}</div>
+                      <div className="text-gray-400">{new Date(s.created_at).toLocaleString()}</div>
+                      <div className="text-gray-500 text-xs">
+                        {s.flashcard_set_id ? 'Flashcards' : ''}{s.flashcard_set_id && s.quiz_id ? ' | ' : ''}{s.quiz_id ? 'Quiz' : ''}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -99,11 +171,12 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                           setError(res.error || 'Failed to delete');
                         } else {
                           setSessions(curr => curr.filter(x => x.id !== s.id));
+                          setSelectedIds(prev => { const next = new Set(prev); next.delete(s.id); return next; });
                         }
                       }}
                       className={`px-3 py-1.5 rounded-lg text-white text-sm font-semibold ${deletingId === s.id ? 'bg-red-800/60 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
                     >
-                      {deletingId === s.id ? 'Deleting…' : 'Delete'}
+                      {deletingId === s.id ? 'Deleting...' : 'Delete'}
                     </button>
                   </div>
                 </li>
@@ -117,3 +190,4 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
 };
 
 export default HistoryModal;
+
