@@ -65,17 +65,22 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold text-white">Chat History</h2>
               {sessions.length > 0 && (
-                <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer select-none">
+                <label className="ea-checkbox text-sm text-gray-300 select-none" title={allSelected ? 'Unselect All' : 'Select All'}>
                   <input
                     type="checkbox"
-                    className="w-4 h-4 rounded border-white/20 bg-white/10"
                     checked={allSelected}
                     onChange={(e) => {
                       if (e.target.checked) setSelectedIds(new Set(sessions.map(s => s.id)));
                       else setSelectedIds(new Set());
                     }}
+                    aria-label={allSelected ? 'Unselect All sessions' : 'Select All sessions'}
                   />
-                  <span>{allSelected ? 'Unselect All' : 'Select All'}</span>
+                  <span className="ea-check" aria-hidden="true">
+                    <svg className="ea-check-icon" viewBox="0 0 24 24" fill="none" strokeWidth="3">
+                      <path d="M5 12l4 4L19 7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <span className="ml-2">{allSelected ? 'Unselect All' : 'Select All'}</span>
                 </label>
               )}
             </div>
@@ -130,19 +135,24 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
               {sessions.map((s) => (
                 <li key={s.id} className="flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-xl border border-white/10">
                   <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4 rounded border-white/20 bg-white/10"
-                      checked={selectedIds.has(s.id)}
-                      onChange={(e) => {
-                        setSelectedIds(prev => {
-                          const next = new Set(prev);
-                          if (e.target.checked) next.add(s.id); else next.delete(s.id);
-                          return next;
-                        });
-                      }}
-                      aria-label={`Select session ${s.id.slice(0,8)}`}
-                    />
+                    <label className="ea-checkbox" aria-label={`Select session ${s.id.slice(0,8)}`} title={`Select session ${s.id.slice(0,8)}`}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(s.id)}
+                        onChange={(e) => {
+                          setSelectedIds(prev => {
+                            const next = new Set(prev);
+                            if (e.target.checked) next.add(s.id); else next.delete(s.id);
+                            return next;
+                          });
+                        }}
+                      />
+                      <span className="ea-check" aria-hidden="true">
+                        <svg className="ea-check-icon" viewBox="0 0 24 24" fill="none" strokeWidth="3">
+                          <path d="M5 12l4 4L19 7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    </label>
                     <div className="text-sm">
                       <div className="text-white font-medium">Session {s.id.slice(0, 8)}</div>
                       <div className="text-gray-400">{new Date(s.created_at).toLocaleString()}</div>
@@ -190,4 +200,3 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
 };
 
 export default HistoryModal;
-
