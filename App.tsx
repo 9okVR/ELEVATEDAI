@@ -295,6 +295,13 @@ const AppContent: React.FC = () => {
 
   const handleStartSession = useCallback(async () => {
     setError(null);
+    // If Supabase is configured and the user isn't signed in, prompt auth
+    try {
+      if (supabase && !sessionEmail) {
+        setIsAuthModalOpen(true);
+        return;
+      }
+    } catch {}
     if (documents.some(d => d.status !== 'ready') || !selectedGrade) {
       setError("Please wait for all materials to finish processing and select a grade level.");
       return;
@@ -375,7 +382,7 @@ const AppContent: React.FC = () => {
       setLoadingMessage('');
       setLoadingSubMessage('');
     }
-  }, [documents, selectedGrade, selectedModel, isCurrentModelKeySet, collaborationModels]);
+  }, [documents, selectedGrade, selectedModel, isCurrentModelKeySet, collaborationModels, sessionEmail]);
 
   const handleSendMessage = useCallback(async (message: string) => {
     if (isLoading || !selectedGrade) return;
