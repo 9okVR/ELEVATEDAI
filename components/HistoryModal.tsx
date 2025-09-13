@@ -12,7 +12,16 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sessions, setSessions] = useState<Array<{ id: string; created_at: string; flashcard_set_id: string | null; quiz_id: string | null }>>([]);
+  const [sessions, setSessions] = useState<Array<{
+    id: string;
+    created_at: string;
+    flashcard_set_id: string | null;
+    quiz_id: string | null;
+    title?: string | null;
+    last_message_at?: string | null;
+    message_count?: number | null;
+    grade_level?: number | null;
+  }>>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -50,6 +59,25 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
       setLoading(false);
     })();
   }, [isOpen]);
+
+  const formatRelativeTime = (iso: string | null | undefined): string => {
+    try {
+      const date = iso ? new Date(iso) : null;
+      const base = date && !isNaN(date.getTime()) ? date : new Date();
+      const diffMs = Date.now() - base.getTime();
+      const absSec = Math.max(0, Math.floor(Math.abs(diffMs) / 1000));
+      const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+      if (absSec < 60) return rtf.format(-Math.round(diffMs / 1000), 'second');
+      const minutes = Math.round(diffMs / (60 * 1000));
+      if (Math.abs(minutes) < 60) return rtf.format(-minutes, 'minute');
+      const hours = Math.round(diffMs / (60 * 60 * 1000));
+      if (Math.abs(hours) < 24) return rtf.format(-hours, 'hour');
+      const days = Math.round(diffMs / (24 * 60 * 60 * 1000));
+      return rtf.format(-days, 'day');
+    } catch {
+      return '';
+    }
+  };
 
   if (!shouldRender) return null;
 
@@ -132,7 +160,14 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
               <div className="text-gray-400">No sessions found.</div>
             )}
             <ul className="space-y-2">
-              {sessions.map((s) => (
+              {sessions.map((s) => {
+                const displayTitle = (s.title && String(s.title).trim()) ? String(s.title) : `Session ${s.id.slice(0, 8)}`;
+                const recentTs = s.last_message_at || s.created_at;
+                const rel = formatRelativeTime(recentTs);
+                const msgCount = typeof s.message_count === 'number' ? s.message_count : undefined;
+                const hasFlash = Boolean(s.flashcard_set_id);
+                const hasQuiz = Boolean(s.quiz_id);
+                return (
                 <li key={s.id} className="flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-xl border border-white/10">
                   <div className="flex items-center gap-3">
                     <label className="ea-checkbox" aria-label={`Select session ${s.id.slice(0,8)}`} title={`Select session ${s.id.slice(0,8)}`}>
@@ -154,10 +189,25 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                       </span>
                     </label>
                     <div className="text-sm">
-                      <div className="text-white font-medium">Session {s.id.slice(0, 8)}</div>
-                      <div className="text-gray-400">{new Date(s.created_at).toLocaleString()}</div>
-                      <div className="text-gray-500 text-xs">
-                        {s.flashcard_set_id ? 'Flashcards' : ''}{s.flashcard_set_id && s.quiz_id ? ' | ' : ''}{s.quiz_id ? 'Quiz' : ''}
+                      <div className="text-white font-semibold flex items-center gap-2">
+                        <span className="truncate max-w-[14rem]" title={displayTitle}>{displayTitle}</span>
+                        {typeof msgCount === 'number' && (
+                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-white/10 border border-white/10 text-white/80" title={`${msgCount} messages`}>
+                            {msgCount} msgs
+                          </span>
+                        )}
+                        {typeof s.grade_level === 'number' && (
+                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-600/20 border border-purple-500/30 text-purple-200" title={`Grade ${s.grade_level}`}>
+                            G{s.grade_level}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-gray-400 flex items-center gap-2">
+                        <span title={new Date(recentTs || s.created_at).toLocaleString()}>{rel || new Date(s.created_at).toLocaleString()}</span>
+                        <div className="flex items-center gap-1 text-xs">
+                          {hasFlash && <span className="px-1.5 py-0.5 rounded-full bg-white/10 border border-white/10 text-white/70">Flashcards</span>}
+                          {hasQuiz && <span className="px-1.5 py-0.5 rounded-full bg-white/10 border border-white/10 text-white/70">Quiz</span>}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -190,7 +240,8 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                     </button>
                   </div>
                 </li>
-              ))}
+              );
+              })}
             </ul>
           </div>
         </div>
