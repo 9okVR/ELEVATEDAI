@@ -241,14 +241,37 @@ serve(async (req) => {
             created_at: createdAt,
             external_id: extId,
           };
-          // Create session (allow explicit created_at)
-          const { data: created, error: createErr } = await supabase
-            .from('chat_sessions')
-            .insert(insertPayload)
-            .select('id')
-            .single();
-          if (createErr) throw createErr;
-          const session_id = created.id as string;
+          // Create session (allow explicit created_at), with fallbacks for older schemas
+          let session_id: string | null = null;
+          {
+            let attemptPayload = { ...insertPayload };
+            let lastErr: any = null;
+            // Try with full payload (including external_id, created_at)
+            for (let step = 0; step < 3 && !session_id; step++) {
+              const { data: createdA, error: errA } = await supabase
+                .from('chat_sessions')
+                .insert(attemptPayload)
+                .select('id')
+                .single();
+              if (!errA && createdA?.id) {
+                session_id = createdA.id as string;
+                break;
+              }
+              lastErr = errA;
+              // Remove unsupported fields progressively
+              if (step === 0) {
+                // Some schemas may not have external_id
+                delete (attemptPayload as any).external_id;
+                continue;
+              }
+              if (step === 1) {
+                // Some deployments may reject explicit created_at
+                delete (attemptPayload as any).created_at;
+                continue;
+              }
+            }
+            if (!session_id) throw lastErr || new Error('Failed to create session');
+          }
 
           // Flashcards
           const fcItems = entry?.flashcards?.items;
@@ -282,7 +305,7 @@ serve(async (req) => {
             const rows = msgs.map((m: any) => ({
               session_id,
               user_id: uid,
-              role: m.role === 'model' ? 'assistant' : m.role,
+              role: (m.role === 'model' ? 'assistant' : (m.role || 'assistant')),
               content: String(m.content ?? m.text ?? ''),
               created_at: (m.created_at && !Number.isNaN(Date.parse(m.created_at)) ? new Date(m.created_at).toISOString() : undefined)
             }));
