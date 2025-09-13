@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { listChatSessions, deleteChatSession } from '../services/historyService';
+import { listChatSessions, deleteChatSession, updateChatSession, getChatSession } from '../services/historyService';
 
 interface HistoryModalProps {
   isOpen: boolean;
@@ -25,6 +25,11 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [viewDensity, setViewDensity] = useState<'cozy' | 'compact'>('cozy');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState<string>('');
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [previews, setPreviews] = useState<Record<string, { lastMessage?: string; docCount?: number }>>({});
 
   const allSelected = useMemo(() => sessions.length > 0 && selectedIds.size === sessions.length, [sessions, selectedIds]);
   const hasSelection = selectedIds.size > 0;
@@ -59,6 +64,50 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
       setLoading(false);
     })();
   }, [isOpen]);
+
+  // Fetch lightweight previews (last message + doc count) after sessions load
+  useEffect(() => {
+    if (!isOpen || sessions.length === 0) return;
+    (async () => {
+      try {
+        const idsToFetch = sessions.map(s => s.id);
+        const results = await Promise.all(idsToFetch.map(async (id) => {
+          try {
+            const res = await getChatSession(id);
+            if (!res.ok || !res.data) return [id, {}] as const;
+            const { messages, session } = res.data as any;
+            const last = Array.isArray(messages) && messages.length > 0 ? String(messages[messages.length - 1].content || '') : '';
+            const docCount = Array.isArray(session?.documents) ? session.documents.length : undefined;
+            return [id, { lastMessage: last, docCount }] as const;
+          } catch { return [id, {}] as const; }
+        }));
+        const map: Record<string, { lastMessage?: string; docCount?: number }> = {};
+        for (const [id, data] of results) map[id] = data;
+        setPreviews(map);
+      } catch {}
+    })();
+  }, [isOpen, sessions]);
+
+  const startEditing = (id: string, currentTitle: string | undefined | null) => {
+    setEditingId(id);
+    setEditingTitle(String(currentTitle ?? '').slice(0, 120));
+  };
+
+  const commitTitle = async (id: string) => {
+    const title = editingTitle.trim().slice(0, 120);
+    setEditingId(null);
+    if (!title) return; // allow clearing by doing nothing; keep old title
+    try {
+      setRenamingId(id);
+      const res = await updateChatSession({ id, title });
+      setRenamingId(null);
+      if (!res.ok) { setError(res.error || 'Failed to rename'); return; }
+      setSessions(curr => curr.map(s => s.id === id ? { ...s, title } : s));
+    } catch (e) {
+      setRenamingId(null);
+      setError('Failed to rename');
+    }
+  };
 
   const formatRelativeTime = (iso: string | null | undefined): string => {
     try {
@@ -144,6 +193,42 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
               >
                 {bulkDeleting ? 'Deleting...' : hasSelection ? `Delete Selected (${selectedIds.size})` : 'Delete Selected'}
               </button>
+              <button
+                onClick={async () => {
+                  try {
+                    if (!hasSelection) return;
+                    const ids = Array.from(selectedIds);
+                    const payload: any[] = [];
+                    for (const id of ids) {
+                      try {
+                        const res = await getChatSession(id);
+                        if (res.ok && res.data) payload.push(res.data);
+                      } catch {}
+                    }
+                    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), sessions: payload }, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+                    a.href = url;
+                    a.download = `elevated-ai-sessions-${stamp}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0);
+                  } catch (e) {
+                    setError('Failed to export selection');
+                  }
+                }}
+                disabled={!hasSelection}
+                className={`px-3 py-1.5 rounded-lg text-white text-sm font-semibold ${hasSelection ? 'bg-white/10 hover:bg-white/20 border border-white/20' : 'bg-white/5 border border-white/10 cursor-not-allowed text-white/50'}`}
+              >
+                Export Selected
+              </button>
+              <div className="ml-2">
+                <label className="flex items-center gap-2 text-xs text-white/70 cursor-pointer">
+                  <input type="checkbox" className="w-4 h-4" checked={viewDensity === 'compact'} onChange={(e) => setViewDensity(e.target.checked ? 'compact' : 'cozy')} />
+                  Compact
+                </label>
+              </div>
               <button onClick={onClose} className="text-gray-400 hover:text-white" aria-label="Close">
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
@@ -151,7 +236,15 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
           </div>
           <div className="p-4 max-h-[60vh] overflow-y-auto">
             {loading && (
-              <div className="text-gray-400">Loading sessions...</div>
+              <ul className="space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <li key={i} className="p-3 rounded-xl border border-white/10 bg-white/5">
+                    <div className="h-4 w-40 skeleton mb-2"></div>
+                    <div className="h-3 w-24 skeleton mb-1"></div>
+                    <div className="h-3 w-32 skeleton"></div>
+                  </li>
+                ))}
+              </ul>
             )}
             {error && (
               <div className="text-red-300 bg-red-500/10 border border-red-500/20 p-3 rounded-lg">{error}</div>
@@ -159,16 +252,38 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
             {!loading && !error && sessions.length === 0 && (
               <div className="text-gray-400">No sessions found.</div>
             )}
-            <ul className="space-y-2">
-              {sessions.map((s) => {
+            {/* Grouping into Today / Yesterday / This week / Earlier */}
+            {!loading && sessions.length > 0 && (
+            <ul className="space-y-4">
+              {(() => {
+                const groups: Record<string, typeof sessions> = { 'Today': [], 'Yesterday': [], 'This week': [], 'Earlier': [] };
+                const now = new Date();
+                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const startOfYesterday = new Date(startOfDay.getTime() - 24*60*60*1000);
+                const startOfWeek = new Date(startOfDay.getTime() - (startOfDay.getDay() || 7 - 1) * 24*60*60*1000); // Monday-based
+                for (const s of sessions) {
+                  const ts = new Date(s.last_message_at || s.created_at);
+                  if (ts >= startOfDay) groups['Today'].push(s);
+                  else if (ts >= startOfYesterday) groups['Yesterday'].push(s);
+                  else if (ts >= startOfWeek) groups['This week'].push(s);
+                  else groups['Earlier'].push(s);
+                }
+                const order = ['Today', 'Yesterday', 'This week', 'Earlier'];
+                return order.filter(label => groups[label].length > 0).map(label => (
+                  <li key={label}>
+                    <div className="text-xs uppercase tracking-wide text-white/60 mb-1">{label}</div>
+                    <ul className="space-y-2">
+                      {groups[label].map((s) => {
                 const displayTitle = (s.title && String(s.title).trim()) ? String(s.title) : `Session ${s.id.slice(0, 8)}`;
                 const recentTs = s.last_message_at || s.created_at;
                 const rel = formatRelativeTime(recentTs);
                 const msgCount = typeof s.message_count === 'number' ? s.message_count : undefined;
                 const hasFlash = Boolean(s.flashcard_set_id);
                 const hasQuiz = Boolean(s.quiz_id);
+                const pv = previews[s.id] || {};
+                const dense = viewDensity === 'compact';
                 return (
-                <li key={s.id} className="flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-xl border border-white/10">
+                <li key={s.id} className={`flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors rounded-xl border border-white/10 ${dense ? 'p-2' : 'p-3'}`}>
                   <div className="flex items-center gap-3">
                     <label className="ea-checkbox" aria-label={`Select session ${s.id.slice(0,8)}`} title={`Select session ${s.id.slice(0,8)}`}>
                       <input
@@ -188,9 +303,24 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                         </svg>
                       </span>
                     </label>
-                    <div className="text-sm">
+                    <div className={`text-sm ${dense ? 'leading-tight' : ''}`}>
                       <div className="text-white font-semibold flex items-center gap-2">
-                        <span className="truncate max-w-[14rem]" title={displayTitle}>{displayTitle}</span>
+                        {editingId === s.id ? (
+                          <input
+                            autoFocus
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            onBlur={() => commitTitle(s.id)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') commitTitle(s.id); if (e.key === 'Escape') setEditingId(null); }}
+                            className="bg-white/10 border border-white/20 rounded px-2 py-1 text-white w-56"
+                            maxLength={120}
+                          />
+                        ) : (
+                          <button className="truncate max-w-[14rem] text-left hover:underline" title="Rename session" onClick={() => startEditing(s.id, s.title)}>
+                            {displayTitle}
+                          </button>
+                        )}
+                        {renamingId === s.id && <span className="text-white/60 text-xs">Saving…</span>}
                         {typeof msgCount === 'number' && (
                           <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-white/10 border border-white/10 text-white/80" title={`${msgCount} messages`}>
                             {msgCount} msgs
@@ -208,6 +338,12 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                           {hasFlash && <span className="px-1.5 py-0.5 rounded-full bg-white/10 border border-white/10 text-white/70">Flashcards</span>}
                           {hasQuiz && <span className="px-1.5 py-0.5 rounded-full bg-white/10 border border-white/10 text-white/70">Quiz</span>}
                         </div>
+                        {(pv.lastMessage || pv.docCount != null) && (
+                          <div className="text-xs text-white/60 truncate max-w-[18rem]">
+                            {pv.docCount != null && <span className="mr-2">Docs: {pv.docCount}</span>}
+                            {pv.lastMessage && <span className="italic">“{pv.lastMessage.slice(0, 100)}{pv.lastMessage.length > 100 ? '…' : ''}”</span>}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -241,8 +377,13 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                   </div>
                 </li>
               );
-              })}
+                      })}
+                    </ul>
+                  </li>
+                ));
+              })()}
             </ul>
+            )}
           </div>
         </div>
       </div>
