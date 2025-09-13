@@ -477,6 +477,32 @@
   100% { background-position: 0 0; }
 }
 
+/* Typing indicator dots for AI bubble */
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  display: inline-block;
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.6);
+  animation: typing-bounce 1s ease-in-out infinite;
+}
+
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
+  40% { transform: translateY(-4px) scale(1.1); opacity: 1; }
+}
+
+/* Smooth fade for new assistant messages */
+.animate-chat-fade {
+  animation: chat-fade-in 320ms ease-out both;
+}
+@keyframes chat-fade-in {
+  0% { opacity: 0; transform: translateY(6px) scale(0.995); filter: saturate(0.9); }
+  60% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 1; filter: saturate(1); }
+}
+
 .ea-checkbox input {
   position: absolute;
   opacity: 0;
