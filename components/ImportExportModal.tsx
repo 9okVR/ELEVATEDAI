@@ -97,21 +97,19 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({
       if (data && data.type === 'elevated-ai/sessions' && Array.isArray(data.sessions)) {
         setImportTotal(data.sessions.length);
         setImportDone(0);
-        setImportRows(data.sessions.map((e: any) => ({ title: (e?.session?.title || `Session ${String(e?.session?.id || '').slice(0,8)}`), status: 'pending' as const })));
+        const initialRows = data.sessions.map((e: any, idx: number) => ({ title: (e?.session?.title || `Session ${String(e?.session?.id || '').slice(0,8)}` || `Session ${idx+1}`), status: 'pending' as const }));
+        setImportRows(initialRows);
         // Stream progress by importing one-by-one via privileged endpoint to preserve timestamps
-        let okCount = 0, errCount = 0;
-        const rowsCopy = [...importRows];
+        let okCount = 0, skipCount = 0, errCount = 0;
+        let rowsCopy = [...initialRows];
         for (let i = 0; i < data.sessions.length; i++) {
           const entry = data.sessions[i];
           try {
             const res = await importSessions([entry]);
-            if (res.ok && (res.imported ?? 0) > 0) {
-              okCount++;
-              rowsCopy[i] = { title: rowsCopy[i]?.title || `Session ${i+1}`, status: 'ok' };
-            } else {
-              errCount++;
-              rowsCopy[i] = { title: rowsCopy[i]?.title || `Session ${i+1}`, status: 'error', msg: res.error || res.results?.[0]?.error };
-            }
+            const r0: any = res.results && res.results[0];
+            if (res.ok && (res.imported ?? 0) > 0) { okCount++; rowsCopy[i] = { title: rowsCopy[i]?.title || `Session ${i+1}`, status: 'ok' }; }
+            else if (res.ok && (r0?.ok || (res.skipped ?? 0) > 0)) { skipCount++; rowsCopy[i] = { title: rowsCopy[i]?.title || `Session ${i+1}`, status: 'ok', msg: 'Skipped (duplicate)' }; }
+            else { errCount++; rowsCopy[i] = { title: rowsCopy[i]?.title || `Session ${i+1}`, status: 'error', msg: res.error || r0?.error || 'Failed' }; }
           } catch (e) {
             errCount++;
             rowsCopy[i] = { title: rowsCopy[i]?.title || `Session ${i+1}`, status: 'error', msg: (e as Error).message };
@@ -119,7 +117,10 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({
           setImportRows([...rowsCopy]);
           setImportDone(i + 1);
         }
-        showMessage('success', `Imported ${okCount} of ${data.sessions.length} sessions${errCount ? `, ${errCount} failed` : ''}.`);
+        const parts = [`Imported ${okCount}`];
+        if (skipCount) parts.push(`${skipCount} skipped`);
+        if (errCount) parts.push(`${errCount} failed`);
+        showMessage(errCount ? 'error' : 'success', `${parts.join(', ')} of ${data.sessions.length} session(s).`);
       } else {
         // Regular study data import
         if (data.documents && data.documents.length > 0) {

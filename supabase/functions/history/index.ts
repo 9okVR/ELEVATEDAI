@@ -209,7 +209,7 @@ serve(async (req) => {
     if (action === 'import_sessions') {
       const sessions = (body?.sessions || body?.bundle?.sessions) as any[] | undefined;
       if (!Array.isArray(sessions) || sessions.length === 0) return bad(400, 'sessions array required');
-      const results: Array<{ external_id?: string; session_id?: string; ok: boolean; error?: string }>=[];
+      const results: Array<{ external_id?: string; session_id?: string; ok: boolean; skipped?: boolean; error?: string }> = [];
       for (const entry of sessions) {
         try {
           const s = entry?.session || {};
@@ -223,7 +223,7 @@ serve(async (req) => {
               .eq('external_id', extId)
               .maybeSingle();
             if (exists?.id) {
-              results.push({ external_id: extId, session_id: exists.id, ok: true });
+              results.push({ external_id: extId, session_id: exists.id, ok: true, skipped: true });
               continue;
             }
           }
@@ -335,11 +335,10 @@ serve(async (req) => {
           results.push({ ok: false, error: (e as any)?.message || String(e) });
         }
       }
-      const summary = {
-        imported: results.filter(r => r.ok).length,
-        failed: results.filter(r => !r.ok).length,
-        results,
-      };
+      const imported = results.filter(r => r.ok && !r.skipped).length;
+      const skipped = results.filter(r => r.skipped).length;
+      const failed = results.filter(r => !r.ok).length;
+      const summary = { imported, skipped, failed, results };
       return new Response(JSON.stringify(summary), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
