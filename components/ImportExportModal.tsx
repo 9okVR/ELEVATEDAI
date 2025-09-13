@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { importExportService, ExportFormat, StudySet } from '../services/importExportService';
-import { createChatSession, updateChatSession, addChatMessage, saveFlashcardSet, saveQuiz } from '../services/historyService';
+import { importSessions } from '../services/historyService';
 import type { StudyDocument, Flashcard, QuizQuestion, GradeLevel } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
 import UploadIcon from './icons/UploadIcon';
@@ -37,6 +37,9 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({
   const [shouldRender, setShouldRender] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
+  const [importTotal, setImportTotal] = useState<number>(0);
+  const [importDone, setImportDone] = useState<number>(0);
+  const [importRows, setImportRows] = useState<Array<{ title: string; status: 'pending'|'ok'|'error'; msg?: string }>>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -92,54 +95,31 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({
       const data = await importExportService.importStudyData(file) as any;
       // If it's a sessions bundle from HistoryModal
       if (data && data.type === 'elevated-ai/sessions' && Array.isArray(data.sessions)) {
-        let imported = 0;
-        for (const entry of data.sessions) {
+        setImportTotal(data.sessions.length);
+        setImportDone(0);
+        setImportRows(data.sessions.map((e: any) => ({ title: (e?.session?.title || `Session ${String(e?.session?.id || '').slice(0,8)}`), status: 'pending' as const })));
+        // Stream progress by importing one-by-one via privileged endpoint to preserve timestamps
+        let okCount = 0, errCount = 0;
+        const rowsCopy = [...importRows];
+        for (let i = 0; i < data.sessions.length; i++) {
+          const entry = data.sessions[i];
           try {
-            const s = entry.session || {};
-            const created = await createChatSession({
-              flashcard_set_id: null,
-              quiz_id: null,
-              grade_level: typeof s.grade_level === 'number' ? s.grade_level : null,
-            });
-            if (!created.ok || !created.id) continue;
-            const sid = created.id;
-            // Link flashcards
-            if (entry.flashcards && Array.isArray(entry.flashcards.items)) {
-              try {
-                const res = await saveFlashcardSet(entry.flashcards.items);
-                if (res.ok && res.id) await updateChatSession({ id: sid, flashcard_set_id: res.id });
-              } catch {}
+            const res = await importSessions([entry]);
+            if (res.ok && (res.imported ?? 0) > 0) {
+              okCount++;
+              rowsCopy[i] = { title: rowsCopy[i]?.title || `Session ${i+1}`, status: 'ok' };
+            } else {
+              errCount++;
+              rowsCopy[i] = { title: rowsCopy[i]?.title || `Session ${i+1}`, status: 'error', msg: res.error || res.results?.[0]?.error };
             }
-            // Link quiz
-            if (entry.quiz && Array.isArray(entry.quiz.items)) {
-              try {
-                const res = await saveQuiz(entry.quiz.items, entry.quiz.results ?? null);
-                if (res.ok && res.id) await updateChatSession({ id: sid, quiz_id: res.id });
-              } catch {}
-            }
-            // Update metadata: title, topics, sources, documents, grade
-            try {
-              const patch: any = {};
-              if (typeof s.title === 'string' && s.title.trim()) patch.title = s.title.slice(0, 120);
-              if (typeof s.topics === 'string') patch.topics = s.topics;
-              if (s.topics_sources) patch.topics_sources = s.topics_sources;
-              if (Array.isArray(s.documents)) patch.documents = s.documents;
-              if (typeof s.grade_level === 'number') patch.grade_level = s.grade_level;
-              if (Object.keys(patch).length) await updateChatSession({ id: sid, ...patch });
-            } catch {}
-            // Recreate messages in order
-            if (Array.isArray(entry.messages)) {
-              for (const m of entry.messages) {
-                try {
-                  const role = m.role === 'model' ? 'assistant' : m.role; // tolerate alternative role naming
-                  await addChatMessage(sid, role, String(m.content ?? m.text ?? ''));
-                } catch {}
-              }
-            }
-            imported++;
-          } catch {}
+          } catch (e) {
+            errCount++;
+            rowsCopy[i] = { title: rowsCopy[i]?.title || `Session ${i+1}`, status: 'error', msg: (e as Error).message };
+          }
+          setImportRows([...rowsCopy]);
+          setImportDone(i + 1);
         }
-        showMessage('success', `Imported ${imported} session${imported === 1 ? '' : 's'}!`);
+        showMessage('success', `Imported ${okCount} of ${data.sessions.length} sessions${errCount ? `, ${errCount} failed` : ''}.`);
       } else {
         // Regular study data import
         if (data.documents && data.documents.length > 0) {
@@ -378,17 +358,34 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({
 
           {/* Processing Indicator */}
           {isProcessing && (
-            <div className="text-center py-4">
-              <div className="inline-flex items-center gap-3 text-purple-300">
-                <div className="relative w-5 h-5">
-                  <div className="absolute w-5 h-5 border-2 border-transparent border-t-purple-400 border-r-purple-400 rounded-full animate-spin"></div>
-                  <div className="absolute w-3 h-3 top-1 left-1 border-2 border-transparent border-b-indigo-400 rounded-full animate-spin-reverse"></div>
-                  <div className="absolute w-1 h-1 top-2 left-2 bg-purple-500 rounded-full animate-pulse"></div>
-                </div>
-                <span className="font-medium tracking-wide animate-pulse">Processing...</span>
+          <div className="text-center py-4">
+            <div className="inline-flex items-center gap-3 text-purple-300">
+              <div className="relative w-5 h-5">
+                <div className="absolute w-5 h-5 border-2 border-transparent border-t-purple-400 border-r-purple-400 rounded-full animate-spin"></div>
+                <div className="absolute w-3 h-3 top-1 left-1 border-2 border-transparent border-b-indigo-400 rounded-full animate-spin-reverse"></div>
+                <div className="absolute w-1 h-1 top-2 left-2 bg-purple-500 rounded-full animate-pulse"></div>
               </div>
+              <span className="font-medium tracking-wide animate-pulse">Processing...</span>
             </div>
-          )}
+            {importTotal > 0 && (
+              <div className="mt-3 text-xs text-white/70">
+                <div className="mb-1">Imported {importDone} / {importTotal}</div>
+                <div className="max-h-40 overflow-auto border border-white/10 rounded-md p-2 bg-black/20">
+                  <ul className="space-y-1">
+                    {importRows.map((r, idx) => (
+                      <li key={idx} className="flex items-center justify-between gap-2">
+                        <span className="truncate max-w-[14rem]" title={r.title}>{r.title}</span>
+                        <span className={`text-xs ${r.status==='ok'?'text-green-300':r.status==='error'?'text-red-300':'text-white/60'}`}>
+                          {r.status==='ok'?'Imported':r.status==='error'?(r.msg||'Failed'):'Pending'}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
           </div>
         </div>
       </div>

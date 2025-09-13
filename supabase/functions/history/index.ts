@@ -200,6 +200,143 @@ serve(async (req) => {
       return new Response(JSON.stringify({ sessions: data }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    if (action === 'import_sessions') {
+      const sessions = (body?.sessions || body?.bundle?.sessions) as any[] | undefined;
+      if (!Array.isArray(sessions) || sessions.length === 0) return bad(400, 'sessions array required');
+      const results: Array<{ external_id?: string; session_id?: string; ok: boolean; error?: string }>=[];
+      for (const entry of sessions) {
+        try {
+          const s = entry?.session || {};
+          const extId = String(s?.id ?? '').slice(0, 64) || undefined;
+          // Deduplicate by (user_id, external_id)
+          if (extId) {
+            const { data: exists } = await supabase
+              .from('chat_sessions')
+              .select('id')
+              .eq('user_id', uid)
+              .eq('external_id', extId)
+              .maybeSingle();
+            if (exists?.id) {
+              results.push({ external_id: extId, session_id: exists.id, ok: true });
+              continue;
+            }
+          }
+
+          const createdAt = s?.created_at && !Number.isNaN(Date.parse(s.created_at)) ? new Date(s.created_at).toISOString() : new Date().toISOString();
+          const insertPayload: Record<string, any> = {
+            user_id: uid,
+            flashcard_set_id: null,
+            quiz_id: null,
+            grade_level: Number.isInteger(s?.grade_level) ? s.grade_level : null,
+            title: typeof s?.title === 'string' ? String(s.title).slice(0, 120) : null,
+            topics: typeof s?.topics === 'string' ? s.topics : null,
+            topics_sources: s?.topics_sources ?? null,
+            documents: Array.isArray(s?.documents) ? s.documents : null,
+            created_at: createdAt,
+            external_id: extId,
+          };
+          // Create session (allow explicit created_at)
+          const { data: created, error: createErr } = await supabase
+            .from('chat_sessions')
+            .insert(insertPayload)
+            .select('id')
+            .single();
+          if (createErr) throw createErr;
+          const session_id = created.id as string;
+
+          // Flashcards
+          const fcItems = entry?.flashcards?.items;
+          if (Array.isArray(fcItems) && fcItems.length > 0) {
+            const { data: fci, error: fce } = await supabase
+              .from('flashcard_sets')
+              .insert({ user_id: uid, items: fcItems })
+              .select('id')
+              .single();
+            if (!fce && fci?.id) {
+              await supabase.from('chat_sessions').update({ flashcard_set_id: fci.id }).eq('id', session_id).eq('user_id', uid);
+            }
+          }
+
+          // Quiz
+          const qzItems = entry?.quiz?.items;
+          if (Array.isArray(qzItems) && qzItems.length > 0) {
+            const { data: qzi, error: qze } = await supabase
+              .from('quizzes')
+              .insert({ user_id: uid, items: qzItems, results: entry?.quiz?.results ?? null })
+              .select('id')
+              .single();
+            if (!qze && qzi?.id) {
+              await supabase.from('chat_sessions').update({ quiz_id: qzi.id }).eq('id', session_id).eq('user_id', uid);
+            }
+          }
+
+          // Messages (preserve created_at)
+          const msgs = Array.isArray(entry?.messages) ? entry.messages : [];
+          if (msgs.length > 0) {
+            const rows = msgs.map((m: any) => ({
+              session_id,
+              user_id: uid,
+              role: m.role === 'model' ? 'assistant' : m.role,
+              content: String(m.content ?? m.text ?? ''),
+              created_at: (m.created_at && !Number.isNaN(Date.parse(m.created_at)) ? new Date(m.created_at).toISOString() : undefined)
+            }));
+            // Insert in order; if created_at omitted, default now
+            for (const r of rows) {
+              await supabase.from('chat_messages').insert(r);
+            }
+          }
+
+          // Optional normalized documents (session_documents) if present
+          const docs = Array.isArray(s?.documents) ? s.documents : [];
+          if (docs.length > 0) {
+            // Best-effort: insert doc metadata as text_content
+            try {
+              const rows = docs.map((d: any) => ({
+                session_id,
+                user_id: uid,
+                name: String(d?.name ?? 'Document'),
+                mime: d?.mime ?? null,
+                size_bytes: d?.size_bytes ?? null,
+                text_content: typeof d?.content === 'string' ? d.content : null,
+                storage_path: d?.storage_path ?? null,
+              }));
+              if (rows.length) await supabase.from('session_documents').insert(rows);
+            } catch {}
+          }
+
+          // After inserting messages, recompute last_message_at and message_count explicitly if triggers missing
+          try {
+            const { data: msgAgg } = await supabase
+              .from('chat_messages')
+              .select('created_at')
+              .eq('session_id', session_id)
+              .order('created_at', { ascending: false })
+              .limit(1);
+            const last = msgAgg && msgAgg[0]?.created_at ? msgAgg[0].created_at : createdAt;
+            const { count } = await supabase
+              .from('chat_messages')
+              .select('id', { count: 'exact', head: true })
+              .eq('session_id', session_id);
+            await supabase
+              .from('chat_sessions')
+              .update({ last_message_at: last, message_count: count ?? 0 })
+              .eq('id', session_id)
+              .eq('user_id', uid);
+          } catch {}
+
+          results.push({ external_id: extId, session_id, ok: true });
+        } catch (e) {
+          results.push({ ok: false, error: (e as any)?.message || String(e) });
+        }
+      }
+      const summary = {
+        imported: results.filter(r => r.ok).length,
+        failed: results.filter(r => !r.ok).length,
+        results,
+      };
+      return new Response(JSON.stringify(summary), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     if (action === 'get_session') {
       const id = body?.id as string | undefined;
       if (!id) return bad(400, 'id required');

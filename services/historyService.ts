@@ -66,3 +66,10 @@ export async function deleteChatSession(id: string, purge_related = true): Promi
   const res = await call('delete_session', { id, purge_related });
   return res.ok ? { ok: true } : { ok: false, error: res.error };
 }
+
+export async function importSessions(sessions: any[]): Promise<{ ok: boolean; imported?: number; failed?: number; results?: any[]; error?: string }>{
+  const res = await call('import_sessions', { sessions });
+  if (!res.ok) return { ok: false, error: res.error };
+  const data = res.data || {};
+  return { ok: true, imported: data.imported ?? 0, failed: data.failed ?? 0, results: data.results ?? [] };
+}
