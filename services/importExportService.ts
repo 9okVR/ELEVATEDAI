@@ -14,6 +14,9 @@ interface ImportedData {
     version: string;
     appName: string;
   };
+  // When importing a sessions bundle exported from History modal
+  type?: string;
+  sessions?: any[];
 }
 
 // Study set for sharing
@@ -77,7 +80,7 @@ class ImportExportService {
           const content = event.target?.result as string;
           const data = JSON.parse(content) as ImportedData;
           
-          // Validate the imported data
+          // Validate the imported data (accept both study export and sessions bundle)
           if (!this.validateImportedData(data)) {
             throw new Error('Invalid file format or corrupted data');
           }
@@ -293,14 +296,17 @@ class ImportExportService {
   private validateImportedData(data: any): data is ImportedData {
     if (!data || typeof data !== 'object') return false;
     
-    // Check if it has at least one expected property
+    // Accept sessions bundle exported from History modal
+    const isSessionsBundle = data.type === 'elevated-ai/sessions' && Array.isArray(data.sessions);
+
+    // Or accept the study export
     const hasValidStructure = 
       Array.isArray(data.documents) ||
       Array.isArray(data.flashcards) ||
       Array.isArray(data.quiz) ||
       typeof data.gradeLevel === 'number';
     
-    return hasValidStructure;
+    return isSessionsBundle || hasValidStructure;
   }
 }
 

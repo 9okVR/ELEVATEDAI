@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { importExportService, ExportFormat, StudySet } from '../services/importExportService';
+import { createChatSession, updateChatSession, addChatMessage, saveFlashcardSet, saveQuiz } from '../services/historyService';
 import type { StudyDocument, Flashcard, QuizQuestion, GradeLevel } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
 import UploadIcon from './icons/UploadIcon';
@@ -88,22 +89,73 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({
 
     setIsProcessing(true);
     try {
-      const data = await importExportService.importStudyData(file);
-      
-      if (data.documents && data.documents.length > 0) {
-        onImportDocuments(data.documents);
+      const data = await importExportService.importStudyData(file) as any;
+      // If it's a sessions bundle from HistoryModal
+      if (data && data.type === 'elevated-ai/sessions' && Array.isArray(data.sessions)) {
+        let imported = 0;
+        for (const entry of data.sessions) {
+          try {
+            const s = entry.session || {};
+            const created = await createChatSession({
+              flashcard_set_id: null,
+              quiz_id: null,
+              grade_level: typeof s.grade_level === 'number' ? s.grade_level : null,
+            });
+            if (!created.ok || !created.id) continue;
+            const sid = created.id;
+            // Link flashcards
+            if (entry.flashcards && Array.isArray(entry.flashcards.items)) {
+              try {
+                const res = await saveFlashcardSet(entry.flashcards.items);
+                if (res.ok && res.id) await updateChatSession({ id: sid, flashcard_set_id: res.id });
+              } catch {}
+            }
+            // Link quiz
+            if (entry.quiz && Array.isArray(entry.quiz.items)) {
+              try {
+                const res = await saveQuiz(entry.quiz.items, entry.quiz.results ?? null);
+                if (res.ok && res.id) await updateChatSession({ id: sid, quiz_id: res.id });
+              } catch {}
+            }
+            // Update metadata: title, topics, sources, documents, grade
+            try {
+              const patch: any = {};
+              if (typeof s.title === 'string' && s.title.trim()) patch.title = s.title.slice(0, 120);
+              if (typeof s.topics === 'string') patch.topics = s.topics;
+              if (s.topics_sources) patch.topics_sources = s.topics_sources;
+              if (Array.isArray(s.documents)) patch.documents = s.documents;
+              if (typeof s.grade_level === 'number') patch.grade_level = s.grade_level;
+              if (Object.keys(patch).length) await updateChatSession({ id: sid, ...patch });
+            } catch {}
+            // Recreate messages in order
+            if (Array.isArray(entry.messages)) {
+              for (const m of entry.messages) {
+                try {
+                  const role = m.role === 'model' ? 'assistant' : m.role; // tolerate alternative role naming
+                  await addChatMessage(sid, role, String(m.content ?? m.text ?? ''));
+                } catch {}
+              }
+            }
+            imported++;
+          } catch {}
+        }
+        showMessage('success', `Imported ${imported} session${imported === 1 ? '' : 's'}!`);
+      } else {
+        // Regular study data import
+        if (data.documents && data.documents.length > 0) {
+          onImportDocuments(data.documents);
+        }
+        if (data.flashcards && data.flashcards.length > 0) {
+          onImportFlashcards(data.flashcards);
+        }
+        if (data.quiz && data.quiz.length > 0) {
+          onImportQuiz(data.quiz);
+        }
+        if (data.gradeLevel) {
+          onImportGradeLevel(data.gradeLevel);
+        }
+        showMessage('success', 'Successfully imported study data!');
       }
-      if (data.flashcards && data.flashcards.length > 0) {
-        onImportFlashcards(data.flashcards);
-      }
-      if (data.quiz && data.quiz.length > 0) {
-        onImportQuiz(data.quiz);
-      }
-      if (data.gradeLevel) {
-        onImportGradeLevel(data.gradeLevel);
-      }
-      
-      showMessage('success', 'Successfully imported study data!');
     } catch (error) {
       showMessage('error', 'Failed to import: ' + (error as Error).message);
     } finally {

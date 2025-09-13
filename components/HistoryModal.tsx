@@ -205,7 +205,8 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                         if (res.ok && res.data) payload.push(res.data);
                       } catch {}
                     }
-                    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), sessions: payload }, null, 2)], { type: 'application/json' });
+                    const bundle = { type: 'elevated-ai/sessions', version: '1.0.0', exportedAt: new Date().toISOString(), sessions: payload };
+                    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
