@@ -41,8 +41,8 @@ const ChatInput: React.FC<{ onSendMessage: (message: string) => void; isLoading:
   }, [userInput]);
 
   return (
-    <div className="mt-4 flex-shrink-0 sticky bottom-0 z-10 bg-[#0D0B14]/80 backdrop-blur-md pt-2">
-      <div className="flex items-end gap-2 bg-white/5 p-2 rounded-2xl border border-white/10 focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/40 transition-all shadow-lg">
+    <div className="mt-4 flex-shrink-0 sticky bottom-0 z-10 pt-2 pointer-events-none">
+      <div className="flex items-end gap-2 bg-white/5 p-2 rounded-2xl border border-white/10 focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/40 transition-all shadow-lg pointer-events-auto">
         <textarea
           ref={textareaRef}
           value={userInput}
@@ -83,7 +83,7 @@ const StudyGuideOutput: React.FC<StudyGuideOutputProps> = ({ messages, isLoading
 
   return (
     <div className="h-full w-full flex flex-col">
-      <div className="flex-grow overflow-y-auto pr-2 flex flex-col gap-4 custom-scrollbar">
+      <div className="flex-grow overflow-y-auto pr-2 flex flex-col gap-4 custom-scrollbar pb-24">
         {messages.map((message, index) => {
           const shouldAnimate = index >= prevLenRef.current && message.role !== 'user';
           const sentAtTitle = message.at ? new Date(message.at).toLocaleString() : undefined;
