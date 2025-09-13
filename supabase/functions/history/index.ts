@@ -179,12 +179,18 @@ serve(async (req) => {
 
     if (action === 'list_sessions') {
       const limit = Math.min(Math.max(parseInt(body?.limit ?? '20'), 1), 100);
-      let { data, error } = await supabase
+      const orderBy = String(body?.orderBy || 'activity');
+      let query = supabase
         .from('chat_sessions')
         .select('id, created_at, flashcard_set_id, quiz_id, grade_level, title, last_message_at, message_count')
-        .eq('user_id', uid)
-        .order('created_at', { ascending: false })
-        .limit(limit);
+        .eq('user_id', uid);
+      if (orderBy === 'created') {
+        query = query.order('created_at', { ascending: false });
+      } else {
+        // Default: order by last activity with created_at fallback
+        query = query.order('last_message_at', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false });
+      }
+      let { data, error } = await query.limit(limit);
       if (error) {
         // Fallback for older schema without new columns
         const fallback = await supabase
