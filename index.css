@@ -503,6 +503,50 @@
   100% { opacity: 1; filter: saturate(1); }
 }
 
+/* Sleek send button */
+.ea-send-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  box-shadow:
+    0 10px 24px rgba(79, 70, 229, 0.35),
+    0 2px 0 rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 160ms ease, box-shadow 200ms ease, filter 200ms ease, opacity 200ms ease;
+}
+.ea-send-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow:
+    0 14px 30px rgba(124, 58, 237, 0.45),
+    0 3px 0 rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+.ea-send-btn:active {
+  transform: translateY(0);
+  filter: brightness(0.98);
+}
+.ea-send-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: none;
+  box-shadow:
+    0 6px 16px rgba(79, 70, 229, 0.18),
+    0 2px 0 rgba(0, 0, 0, 0.12);
+}
+.ea-send-icon {
+  transition: transform 160ms ease;
+}
+.ea-send-btn:hover .ea-send-icon {
+  transform: translateX(1px) rotate(-6deg);
+}
+
 .ea-checkbox input {
   position: absolute;
   opacity: 0;

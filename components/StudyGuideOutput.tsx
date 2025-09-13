@@ -56,10 +56,11 @@ const ChatInput: React.FC<{ onSendMessage: (message: string) => void; isLoading:
         <button
           onClick={handleSend}
           disabled={isLoading || !userInput.trim()}
-          className="p-2.5 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white disabled:bg-gray-700/60 disabled:cursor-not-allowed hover:opacity-90 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400/60 shadow-md"
+          className="ea-send-btn focus:outline-none"
           aria-label="Send message"
+          title="Send (Enter)"
         >
-          <SendIcon className="w-5 h-5" />
+          <SendIcon className="w-5 h-5 ea-send-icon" />
         </button>
       </div>
     </div>
