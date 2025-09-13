@@ -138,11 +138,11 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
       />
       <div className={`absolute inset-0 flex items-center justify-center p-4`}>
         <div className={`w-full max-w-lg bg-gray-900/95 border border-white/10 rounded-2xl shadow-xl backdrop-blur-xl transition-all duration-200 ${show ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
-          <div className="p-4 border-b border-white/10 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+          <div className="p-3 border-b border-white/10 flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-lg font-semibold text-white">Chat History</h2>
               {sessions.length > 0 && (
-                <label className="ea-checkbox text-sm text-gray-300 select-none" title={allSelected ? 'Unselect All' : 'Select All'}>
+                <label className="ea-checkbox text-xs text-gray-300 select-none" title={allSelected ? 'Unselect All' : 'Select All'}>
                   <input
                     type="checkbox"
                     checked={allSelected}
@@ -161,7 +161,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                 </label>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={async () => {
                   if (!hasSelection || bulkDeleting) return;
@@ -188,7 +188,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                   setSelectedIds(new Set());
                 }}
                 disabled={!hasSelection || bulkDeleting}
-                className={`px-3 py-1.5 rounded-lg text-white text-sm font-semibold ${hasSelection && !bulkDeleting ? 'bg-red-600 hover:bg-red-700' : 'bg-red-800/60 cursor-not-allowed'}`}
+                className={`px-2.5 py-1 rounded-md text-white text-xs font-semibold ${hasSelection && !bulkDeleting ? 'bg-red-600 hover:bg-red-700' : 'bg-red-800/60 cursor-not-allowed'}`}
                 aria-disabled={!hasSelection || bulkDeleting}
               >
                 {bulkDeleting ? 'Deleting...' : hasSelection ? `Delete Selected (${selectedIds.size})` : 'Delete Selected'}
@@ -219,13 +219,13 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                   }
                 }}
                 disabled={!hasSelection}
-                className={`px-3 py-1.5 rounded-lg text-white text-sm font-semibold ${hasSelection ? 'bg-white/10 hover:bg-white/20 border border-white/20' : 'bg-white/5 border border-white/10 cursor-not-allowed text-white/50'}`}
+                className={`px-2.5 py-1 rounded-md text-white text-xs font-semibold ${hasSelection ? 'bg-white/10 hover:bg-white/20 border border-white/20' : 'bg-white/5 border border-white/10 cursor-not-allowed text-white/50'}`}
               >
                 Export Selected
               </button>
               <div className="ml-2">
-                <label className="flex items-center gap-2 text-xs text-white/70 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4" checked={viewDensity === 'compact'} onChange={(e) => setViewDensity(e.target.checked ? 'compact' : 'cozy')} />
+                <label className="flex items-center gap-1.5 text-xs text-white/70 cursor-pointer">
+                  <input type="checkbox" className="w-3.5 h-3.5" checked={viewDensity === 'compact'} onChange={(e) => setViewDensity(e.target.checked ? 'compact' : 'cozy')} />
                   Compact
                 </label>
               </div>
@@ -234,7 +234,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
               </button>
             </div>
           </div>
-          <div className="p-4 max-h-[60vh] overflow-y-auto">
+          <div className="p-3 max-h-[60vh] overflow-y-auto overflow-x-hidden custom-scrollbar">
             {loading && (
               <ul className="space-y-2">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -283,8 +283,8 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                 const pv = previews[s.id] || {};
                 const dense = viewDensity === 'compact';
                 return (
-                <li key={s.id} className={`flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors rounded-xl border border-white/10 ${dense ? 'p-2' : 'p-3'}`}>
-                  <div className="flex items-center gap-3">
+                <li key={s.id} className={`flex items-start justify-between bg-white/5 hover:bg-white/10 transition-colors rounded-xl border border-white/10 ${dense ? 'p-2' : 'p-3'} gap-3`}>
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
                     <label className="ea-checkbox" aria-label={`Select session ${s.id.slice(0,8)}`} title={`Select session ${s.id.slice(0,8)}`}>
                       <input
                         type="checkbox"
@@ -303,7 +303,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                         </svg>
                       </span>
                     </label>
-                    <div className={`text-sm ${dense ? 'leading-tight' : ''}`}>
+                    <div className={`text-sm ${dense ? 'leading-tight' : ''} min-w-0`}>
                       <div className="text-white font-semibold flex items-center gap-2">
                         {editingId === s.id ? (
                           <input
@@ -316,7 +316,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                             maxLength={120}
                           />
                         ) : (
-                          <button className="truncate max-w-[14rem] text-left hover:underline" title="Rename session" onClick={() => startEditing(s.id, s.title)}>
+                          <button className="truncate max-w-full text-left hover:underline" title="Rename session" onClick={() => startEditing(s.id, s.title)}>
                             {displayTitle}
                           </button>
                         )}
@@ -332,14 +332,14 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                           </span>
                         )}
                       </div>
-                      <div className="text-gray-400 flex items-center gap-2">
-                        <span title={new Date(recentTs || s.created_at).toLocaleString()}>{rel || new Date(s.created_at).toLocaleString()}</span>
-                        <div className="flex items-center gap-1 text-xs">
+                      <div className="text-gray-400 flex items-center gap-2 min-w-0">
+                        <span className="shrink-0" title={new Date(recentTs || s.created_at).toLocaleString()}>{rel || new Date(s.created_at).toLocaleString()}</span>
+                        <div className="flex items-center gap-1 text-xs shrink-0">
                           {hasFlash && <span className="px-1.5 py-0.5 rounded-full bg-white/10 border border-white/10 text-white/70">Flashcards</span>}
                           {hasQuiz && <span className="px-1.5 py-0.5 rounded-full bg-white/10 border border-white/10 text-white/70">Quiz</span>}
                         </div>
                         {(pv.lastMessage || pv.docCount != null) && (
-                          <div className="text-xs text-white/60 truncate max-w-[18rem]">
+                          <div className="text-xs text-white/60 truncate min-w-0">
                             {pv.docCount != null && <span className="mr-2">Docs: {pv.docCount}</span>}
                             {pv.lastMessage && <span className="italic">“{pv.lastMessage.slice(0, 100)}{pv.lastMessage.length > 100 ? '…' : ''}”</span>}
                           </div>
@@ -347,10 +347,10 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => { onSelectSession(s.id); onClose(); }}
-                      className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold"
+                      className="px-2.5 py-1 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold"
                       disabled={deletingId === s.id}
                     >
                       Open
@@ -370,7 +370,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                           setSelectedIds(prev => { const next = new Set(prev); next.delete(s.id); return next; });
                         }
                       }}
-                      className={`px-3 py-1.5 rounded-lg text-white text-sm font-semibold ${deletingId === s.id ? 'bg-red-800/60 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
+                      className={`px-2.5 py-1 rounded-md text-white text-xs font-semibold ${deletingId === s.id ? 'bg-red-800/60 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
                     >
                       {deletingId === s.id ? 'Deleting...' : 'Delete'}
                     </button>
