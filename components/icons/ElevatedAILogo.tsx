@@ -182,18 +182,19 @@ const ElevatedAILogo: React.FC<LogoProps> = ({ className = "w-12 h-12", showText
         </g>
       </svg>
       
-      {/* Enhanced Text Logo */}
+      {/* Modern Wordmark */}
       {showText && (
-        <div className="flex flex-col relative">
-          {/* Stable holographic background glow */}
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-cyan-500/20 to-pink-500/20 blur-lg rounded-lg opacity-60" />
-          
-          <span className="relative text-3xl font-black bg-gradient-to-r from-purple-300 via-cyan-300 to-pink-300 bg-clip-text text-transparent drop-shadow-lg">
-            Elevated
-          </span>
-          <span className="relative text-xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent -mt-2 tracking-wider">
-            AI
-          </span>
+        <div className="relative select-none">
+          {/* Soft ambient glow */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/10 via-cyan-500/10 to-pink-500/10 blur-xl rounded-xl" />
+          <div className="relative flex items-center gap-2">
+            <span className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-purple-200 via-indigo-200 to-pink-200 bg-clip-text text-transparent">
+              Elevated
+            </span>
+            <span className="uppercase text-[11px] sm:text-xs font-black tracking-widest px-2.5 py-1 rounded-md border border-white/15 bg-gradient-to-br from-purple-600/30 to-indigo-600/30 text-white/90 shadow-[0_4px_18px_rgba(124,58,237,0.35)]">
+              AI
+            </span>
+          </div>
         </div>
       )}
     </div>

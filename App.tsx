@@ -601,10 +601,10 @@ const AppContent: React.FC = () => {
 
       {/* Mobile Compact Header */}
       <div className="sm:hidden sticky top-0 z-40 -mx-2 px-3 py-2 bg-black/30 backdrop-blur-md border-b border-white/10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ElevatedAILogo className="w-6 h-6" showText={false} />
-          <span className="text-white font-semibold">Elevated AI</span>
-        </div>
+          <div className="flex items-center gap-2">
+            <ElevatedAILogo className="w-6 h-6" showText={false} />
+            <span className="font-extrabold tracking-wide bg-gradient-to-r from-purple-200 via-indigo-200 to-pink-200 bg-clip-text text-transparent">Elevated AI</span>
+          </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsSettingsModalOpen(true)}
