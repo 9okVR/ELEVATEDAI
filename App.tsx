@@ -840,18 +840,18 @@ const AppContent: React.FC = () => {
               className="relative z-30 text-center mb-8 sm:mb-12 animate-entry"
               style={{ animationDelay: '0.2s' }}
             >
-              <div className="inline-flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
-                <div className="relative inline-flex items-center justify-center p-2 sm:p-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 shadow-md shadow-black/40">
-                  <ElevatedAILogo className="w-12 h-12 sm:w-16 sm:h-16" showText={false} />
+              <div className="relative inline-flex items-center gap-3 sm:gap-5 flex-wrap justify-center">
+                <div className="relative inline-flex items-center justify-center p-2 rounded-full bg-white/5 border border-white/10 shadow-lg">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-600/20 to-indigo-600/20 blur-xl" />
+                  <ElevatedAILogo className="w-14 h-14 sm:w-16 sm:h-16" showText={false} />
                 </div>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                  Elevated <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">AI</span>
-                  <div className="inline-flex items-center gap-2 ml-1 sm:ml-3">
-                  </div>
-                </h1>
+                <div className="relative">
+                  <ElevatedAILogo className="w-[0px] h-[0px]" showText />
+                  <div className="h-[3px] rounded-full mt-2 bg-gradient-to-r from-purple-500/60 via-cyan-400/60 to-pink-500/60 animate-hero-underline" />
+                </div>
               </div>
-              <p className="mt-3 sm:mt-4 text-base sm:text-lg text-gray-400 max-w-2xl mx-auto px-2">
-                Upload your notes or paste text to elevate your study sessions with a personal AI tutor.
+              <p className="mt-4 text-base sm:text-lg text-gray-300/90 max-w-2xl mx-auto px-2">
+                Upload notes or paste text to elevate your study sessions with a personal AI tutor.
               </p>
             </header>
 

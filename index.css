@@ -503,6 +503,16 @@
   100% { opacity: 1; filter: saturate(1); }
 }
 
+/* Hero underline subtle motion */
+.animate-hero-underline {
+  background-size: 200% 100%;
+  animation: hero-underline-move 6s ease-in-out infinite;
+}
+@keyframes hero-underline-move {
+  0%,100% { background-position: 0% 50%; opacity: 0.7; }
+  50% { background-position: 100% 50%; opacity: 1; }
+}
+
 /* Sleek send button */
 .ea-send-btn {
   position: relative;
