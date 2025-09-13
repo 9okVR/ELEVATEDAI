@@ -86,6 +86,8 @@ const StudyGuideOutput: React.FC<StudyGuideOutputProps> = ({ messages, isLoading
       <div className="flex-grow overflow-y-auto pr-2 flex flex-col gap-4 custom-scrollbar">
         {messages.map((message, index) => {
           const shouldAnimate = index >= prevLenRef.current && message.role !== 'user';
+          const sentAtTitle = message.at ? new Date(message.at).toLocaleString() : undefined;
+          const modelName = message.model;
           return (
           <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
@@ -94,14 +96,25 @@ const StudyGuideOutput: React.FC<StudyGuideOutputProps> = ({ messages, isLoading
                   ? 'bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-br-none border-transparent'
                   : 'bg-white/6 backdrop-blur-sm text-gray-200 rounded-bl-none border-white/10'
               } ${shouldAnimate ? 'animate-chat-fade' : ''}`}
+              title={sentAtTitle}
             >
+              {message.role !== 'user' && (
+                <div className="mb-1 -mt-1 text-xs text-white/70 flex items-center gap-2">
+                  {modelName && (
+                    <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-white/80">
+                      {modelName}
+                    </span>
+                  )}
+                  {sentAtTitle && <span className="text-white/60">{sentAtTitle}</span>}
+                </div>
+              )}
               <MarkdownRenderer content={message.text} />
               {message.sources && message.sources.length > 0 && <WebSources sources={message.sources} />}
             </div>
           </div>
         );})}
 
-        {isLoading && (
+        {isLoading && (messages[messages.length-1]?.role === 'user') && (
           <div className="flex justify-start">
             <div className="max-w-xl lg:max-w-2xl rounded-2xl p-0.5 bg-gradient-to-r from-purple-600/40 to-indigo-600/40">
               <div className="px-4 py-3 rounded-2xl bg-black/40 border border-white/10">

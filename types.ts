@@ -25,6 +25,8 @@ export interface Message {
   role: 'user' | 'model' | 'system';
   text: string;
   sources?: WebSource[] | null;
+  at?: string; // ISO timestamp for sent-at hover
+  model?: string; // model id/name for assistant messages
 }
 
 export interface Flashcard {

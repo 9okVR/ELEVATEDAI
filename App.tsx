@@ -169,6 +169,7 @@ const AppContent: React.FC = () => {
       const mappedMessages = (rawMessages || []).map((m: any) => ({
         role: m.role === 'assistant' ? 'model' : m.role,
         text: m.content,
+        at: m.created_at,
       }));
       setMessages(mappedMessages);
       if (session?.topics) setKeyTopics(session.topics);
@@ -345,7 +346,7 @@ const AppContent: React.FC = () => {
                 generateKeyTopics(readyDocs, selectedGrade, selectedModel)
               ]);
         
-        setMessages([{ role: 'model', text: initialMessageResponse.text, sources: initialMessageResponse.sources }]);
+        setMessages([{ role: 'model', text: initialMessageResponse.text, sources: initialMessageResponse.sources, at: new Date().toISOString(), model: (getModelInfo as any ? (getModelInfo as any)(selectedModel)?.name : undefined) || selectedModel }]);
         setKeyTopics(topicsResponse.text);
         setKeyTopicsSources(topicsResponse.sources);
 
@@ -392,7 +393,7 @@ const AppContent: React.FC = () => {
     setIsLoading(true);
     setLoadingMessage("Thinking...");
     setError(null);
-    const updatedMessages: Message[] = [...messages, { role: 'user', text: message }];
+    const updatedMessages: Message[] = [...messages, { role: 'user', text: message, at: new Date().toISOString() }];
     setMessages(updatedMessages);
 
     try {
@@ -416,7 +417,7 @@ const AppContent: React.FC = () => {
         ? await sendMessageWithDeepThink(messages, message, readyDocs, selectedGrade, collaborationModels)
         : await sendMessage(messages, message, readyDocs, selectedGrade, selectedModel);
         
-      setMessages([...updatedMessages, { role: 'model', text: response.text, sources: response.sources }]);
+      setMessages([...updatedMessages, { role: 'model', text: response.text, sources: response.sources, at: new Date().toISOString(), model: (getModelInfo as any ? (getModelInfo as any)(selectedModel)?.name : undefined) || selectedModel }]);
 
       // Persist assistant response
       if (sid) {
