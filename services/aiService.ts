@@ -1147,23 +1147,32 @@ Prioritize referencing concepts and topics that appear in their study materials.
 
 // Enhanced text extraction with real AI
 export const extractTextFromContent = async (
-    filePart: { mimeType: string; data: string },
-    modelId: string
+  filePart: { mimeType: string; data: string },
+  modelId: string
 ): Promise<string> => {
-    if (!hasRealApiKey()) {
-        return "# Demo Mode\n\nText extraction requires a valid Gemini API key. Please configure your API key to extract content from uploaded files.";
-    }
-    
-    // For now, return enhanced demo content until vision API is properly integrated
-    await delay(1000);
-    
-    if (filePart.mimeType.includes('pdf')) {
-        return "# Extracted PDF Content\n\nThis PDF has been processed. In the full implementation, this would contain the actual extracted text from your PDF file. Configure your Gemini API key to enable real extraction.";
-    } else if (filePart.mimeType.includes('image')) {
-        return "# Extracted Image Content\n\nThis image has been processed. In the full implementation, this would contain OCR text from your image. Configure your Gemini API key to enable real extraction.";
-    }
-    
-    return "# Extracted File Content\n\nThis file has been processed. Configure your Gemini API key to enable real content extraction.";
+  // Always prefer the proxy so we use the user's saved API key on the server
+  const sizeApprox = Math.floor((filePart.data?.length || 0) * 0.75); // base64 -> bytes approx
+  const modelName = getModelInfo(modelId)?.modelName || modelId;
+
+  if (canUseProxy()) {
+    const prompt = [
+      'Extract the full readable text content from the attached file.',
+      'Preserve headings and paragraphs. Remove headers/footers/page numbers and OCR artifacts.',
+      'Return plain UTF-8 text only with sensible line breaks — no extra commentary.'
+    ].join(' ');
+    const resp = await proxyGenerate({
+      prompt,
+      model: modelName,
+      action: 'extract',
+      doc: { mimeType: filePart.mimeType, data: filePart.data },
+      docBytes: sizeApprox,
+    });
+    if (resp.ok && typeof resp.text === 'string') return resp.text;
+    throw new Error(resp.error || 'Extraction failed');
+  }
+
+  // If the proxy is unavailable, require a stored key rather than using any local env
+  throw new Error('Extraction requires sign-in with Supabase and a saved Gemini API key in Settings.');
 };
 
 // Mock functions for fallback

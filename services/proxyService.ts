@@ -52,9 +52,10 @@ export async function proxyGenerate(opts: {
   prompt: string;
   model: string;
   expectJson?: boolean;
-  action: 'topics' | 'flashcards' | 'quiz' | 'chat';
+  action: 'topics' | 'flashcards' | 'quiz' | 'chat' | 'extract';
   items?: number;
   docBytes?: number;
+  doc?: { mimeType: string; data: string };
 }): Promise<{ ok: boolean; text?: string; error?: string }>{
   if (!canUseProxy()) return { ok: false, error: 'Supabase not configured' };
   const token = await getAccessToken();

@@ -32,7 +32,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
   const authHeader = req.headers.get("Authorization") || "";
   try {
-    const { prompt, model = "gemini-2.5-flash", expectJson = false, action, items, docBytes } = await req.json().catch(() => ({}));
+    const { prompt, model = "gemini-2.5-flash", expectJson = false, action, items, docBytes, doc } = await req.json().catch(() => ({}));
     if (!prompt || !action) return new Response("Missing prompt/action", { status: 400, headers: corsHeaders });
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { global: { headers: { Authorization: authHeader } } });
@@ -68,10 +68,12 @@ serve(async (req) => {
       const client = genai.getGenerativeModel({ model: m });
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          const res = await client.generateContent({
-            contents: [{ role: "user", parts: [{ text: prompt }]}],
-            generationConfig,
-          } as any);
+          // If this is an extract action with a document, attach it as inlineData for multimodal OCR
+          const contents = (action === 'extract' && doc && doc?.data && doc?.mimeType)
+            ? [{ role: 'user', parts: [{ text: prompt }, { inlineData: { data: String(doc.data), mimeType: String(doc.mimeType) } }] }]
+            : [{ role: 'user', parts: [{ text: prompt }] }];
+
+          const res = await client.generateContent({ contents, generationConfig } as any);
           text = res.response.text();
           if (text) break;
         } catch (err) {
