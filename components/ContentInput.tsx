@@ -193,9 +193,9 @@ const ContentInput: React.FC<ContentInputProps> = ({ documents, onAddPastedText,
                       </svg>
                   </div>
                   <div className="min-w-0 flex-1">
-                      <h2 className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
-                          <span className="text-purple-400">1.</span> Provide Your Study Materials
-                      </h2>
+                    <h2 className="panel-section-title text-lg sm:text-xl lg:text-2xl">
+                      <span className="text-purple-400">1.</span> Provide Your Study Materials
+                    </h2>
                       <p className="text-purple-300/80 text-xs sm:text-sm mt-1">
                           Upload documents, paste text, or drag files to get started
                       </p>
@@ -274,7 +274,7 @@ const ContentInput: React.FC<ContentInputProps> = ({ documents, onAddPastedText,
                                 </svg>
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h4 className="font-semibold text-white text-sm sm:text-base">Paste Your Content</h4>
+                                <h4 className="panel-section-title text-sm sm:text-base">Paste Your Content</h4>
                                 <p className="text-xs sm:text-sm text-purple-300/70">Paste notes, articles, or any text content</p>
                             </div>
                         </div>
@@ -285,7 +285,7 @@ const ContentInput: React.FC<ContentInputProps> = ({ documents, onAddPastedText,
                             onFocus={() => setIsTextFocused(true)}
                             onBlur={() => setIsTextFocused(false)}
                             placeholder="Paste your study content here... \n\n• Copy and paste from articles, notes, or documents\n• Type directly or paste from clipboard\n• All text will be processed by AI for study materials"
-                            className="w-full h-28 sm:h-32 lg:h-36 bg-gray-900/95 text-purple-200 p-3 sm:p-4 rounded-lg sm:rounded-xl focus:outline-none resize-none transition-all duration-300 placeholder-purple-400/50 border border-purple-500/20 focus:border-purple-400/40 font-mono text-xs sm:text-sm leading-relaxed focus:text-purple-100 focus:bg-gray-950/95"
+                            className="w-full h-28 sm:h-32 lg:h-36 input-modern p-3 sm:p-4 resize-none font-mono text-xs sm:text-sm leading-relaxed"
                         />
                         
                         {pastedText.trim() && (
@@ -409,3 +409,4 @@ const ContentInput: React.FC<ContentInputProps> = ({ documents, onAddPastedText,
 };
 
 export default ContentInput;
+

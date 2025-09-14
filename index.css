@@ -556,6 +556,22 @@
   color: transparent;
 }
 
+/* Modern input surface */
+.input-modern {
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.95), rgba(17, 24, 39, 0.88));
+  color: #e9d5ff;
+  border-radius: 14px;
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  transition: box-shadow 200ms ease, border-color 200ms ease, background 200ms ease, color 200ms ease;
+}
+.input-modern::placeholder { color: rgba(216, 180, 254, 0.45); }
+.input-modern:focus {
+  outline: none;
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.15), 0 8px 28px rgba(124, 58, 237, 0.25);
+  color: #f5f3ff;
+}
+
 /* Sleek send button */
 .ea-send-btn {
   position: relative;
