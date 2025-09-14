@@ -732,6 +732,7 @@ const AppContent: React.FC = () => {
         <div className="aurora-shape aurora-shape-2"></div>
         <div className="aurora-shape aurora-shape-3"></div>
       </div>
+      <div className="premium-noise" />
 
       <BetaModal isOpen={isBetaModalOpen} onClose={handleCloseBetaModal} />
       <SafetyModal 
@@ -880,8 +881,8 @@ const AppContent: React.FC = () => {
                          <button
                             onClick={handleStartSession}
                             disabled={!canStart}
-                            className={`w-full py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-base sm:text-lg font-semibold transition-all duration-300 ease-in-out transform focus:outline-none focus:ring-4 focus:ring-purple-500/50 flex items-center justify-center gap-2 min-h-[44px] ${canStart ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 shadow-lg shadow-purple-600/30' : 'bg-gray-700/50 cursor-not-allowed text-gray-400 border border-white/10'}`}
-                        >
+                            className={`w-full py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-base sm:text-lg font-semibold transition-all duration-300 ease-in-out transform focus:outline-none focus:ring-4 focus:ring-purple-500/50 flex items-center justify-center gap-2 min-h-[44px] ${canStart ? 'btn-holo' : 'bg-gray-700/50 cursor-not-allowed text-gray-400 border border-white/10'}`}
+                         >
                             {selectedModel === 'ai-advanced-analysis' && <ElevatedAILogo className="w-5 h-5 sm:w-6 sm:h-6" showText={false} />}
                             <span>
                                 {selectedModel === 'ai-advanced-analysis' ? 'Start Advanced Session' : 'Start Session'}
@@ -901,7 +902,7 @@ const AppContent: React.FC = () => {
                 className="h-full animate-entry w-full"
                 style={{ animationDelay: '0.6s' }}
               >
-                <div className="w-full h-full min-h-[400px] sm:min-h-[500px] lg:min-h-[600px] bg-gray-900/50 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+                <div className="w-full h-full min-h-[400px] sm:min-h-[500px] lg:min-h-[600px] glass-card rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
                   {isLoading && !isChatActive ? (
                     <div className="flex-grow flex items-center justify-center p-3 sm:p-4">
                         <Loader message={loadingMessage} subMessage={loadingSubMessage} />
@@ -915,7 +916,7 @@ const AppContent: React.FC = () => {
                   ) : (
                     <>  
                         <div className="p-3 sm:p-4 lg:p-6 pb-0 flex-shrink-0">
-                            <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">Your Study Session</h2>
+                            <h2 className="text-xl sm:text-2xl font-extrabold title-gradient mb-3 sm:mb-4">Your Study Session</h2>
                             <div className="border-b border-white/10">
                                 <div className="flex items-center gap-1 sm:gap-2 -mb-px overflow-x-auto hide-scrollbar" role="tablist">
                                     <TabButton isActive={activeTab === 'topics'} onClick={() => setActiveTab('topics')}>
