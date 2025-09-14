@@ -561,20 +561,20 @@ Provide:
 If something is not in the materials, do NOT include it.`;
 
     // Try server proxy first (per-user key) for topics
-    try {
+    if (canUseProxy()) {
       const modelName = getModelInfo(modelId)?.modelName || modelId;
-      if (canUseProxy()) {
-        const proxied = await proxyGenerate({
-          prompt,
-          model: modelName,
-          action: 'topics',
-          docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0),
-        });
-        if (proxied.ok && proxied.text) {
-          return { text: proxied.text, sources: null };
-        }
+      const proxied = await proxyGenerate({
+        prompt,
+        model: modelName,
+        action: 'topics',
+        docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0),
+      });
+      if (proxied.ok && proxied.text) {
+        return { text: proxied.text, sources: null };
       }
-    } catch {}
+      // If proxy is available but failed (e.g., no saved key), surface the error so user can fix it
+      throw new Error(proxied.error || 'AI proxy failed while generating topics. Ensure your API key is saved in Settings.');
+    }
 
     console.log('📏 Prompt length:', prompt.length, 'characters');
     console.log('📤 Making API call with model:', modelId);
@@ -641,20 +641,20 @@ ${documentsText}
 **Task**: Provide a friendly welcome that mentions the specific topics and subjects you see in THESE materials. Only reference what you can actually see in the provided documents. DO NOT add any introductory phrases or disclaimers about using only the provided materials. Just provide a direct, friendly welcome message.`;
 
     // Try server proxy first (per-user key) for initial chat
-    try {
+    if (canUseProxy()) {
       const modelName = getModelInfo(modelId)?.modelName || modelId;
-      if (canUseProxy()) {
-        const proxied = await proxyGenerate({
-          prompt,
-          model: modelName,
-          action: 'chat',
-          docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0),
-        });
-        if (proxied.ok && proxied.text) {
-          return { text: proxied.text, sources: null };
-        }
+      const proxied = await proxyGenerate({
+        prompt,
+        model: modelName,
+        action: 'chat',
+        docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0),
+      });
+      if (proxied.ok && proxied.text) {
+        return { text: proxied.text, sources: null };
       }
-    } catch {}
+      // If proxy is available but failed, surface the error instead of silently falling back
+      throw new Error(proxied.error || 'AI proxy failed while creating the welcome message. Ensure your API key is saved in Settings.');
+    }
 
     console.log('📝 Initial message prompt length:', prompt.length);
     
@@ -726,20 +726,20 @@ Instructions:
 Tutor Response:`;
 
     // Try server proxy first (per-user key) for chat
-    try {
+    if (canUseProxy()) {
       const modelName = getModelInfo(modelId)?.modelName || modelId;
-      if (canUseProxy()) {
-        const proxied = await proxyGenerate({
-          prompt,
-          model: modelName,
-          action: 'chat',
-          docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0),
-        });
-        if (proxied.ok && proxied.text) {
-          return { text: proxied.text, sources: null };
-        }
+      const proxied = await proxyGenerate({
+        prompt,
+        model: modelName,
+        action: 'chat',
+        docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0),
+      });
+      if (proxied.ok && proxied.text) {
+        return { text: proxied.text, sources: null };
       }
-    } catch {}
+      // If proxy is available but failed, surface the error so the UI can show why
+      throw new Error(proxied.error || 'AI proxy failed while sending message. Ensure your API key is saved in Settings.');
+    }
 
     console.log('📝 Chat prompt length:', prompt.length, 'characters');
     console.log('📤 Making chat API call...');
