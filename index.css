@@ -513,6 +513,49 @@
   50% { background-position: 100% 50%; opacity: 1; }
 }
 
+/* Modern glass panel for study area */
+.panel-modern {
+  position: relative;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(14px) saturate(140%);
+  box-shadow:
+    0 24px 48px rgba(0,0,0,0.35),
+    0 0 0 1px rgba(255,255,255,0.06) inset,
+    0 -1px 0 rgba(255,255,255,0.04) inset;
+  transition: border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+}
+.panel-modern:hover {
+  border-color: rgba(168, 85, 247, 0.35);
+  box-shadow:
+    0 28px 60px rgba(124,58,237,0.25),
+    0 0 0 1px rgba(168,85,247,0.25) inset,
+    0 -1px 0 rgba(255,255,255,0.04) inset;
+}
+.panel-modern::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 22px;
+  pointer-events: none;
+  background: radial-gradient(60% 60% at 50% 0%, rgba(124,58,237,0.25), rgba(79,70,229,0.18) 40%, rgba(236,72,153,0.12) 70%, transparent 80%);
+  filter: blur(14px);
+  opacity: 0.35;
+}
+
+.panel-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  background: linear-gradient(90deg, #e9d5ff, #c7d2fe, #fbcfe8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 /* Sleek send button */
 .ea-send-btn {
   position: relative;

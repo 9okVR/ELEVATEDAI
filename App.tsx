@@ -857,7 +857,7 @@ const AppContent: React.FC = () => {
 
             <main className="grid grid-cols-1 gap-6 sm:gap-8 justify-items-center">
               <div 
-                className="relative z-10 flex flex-col gap-4 sm:gap-6 lg:gap-8 p-3 sm:p-4 lg:p-6 bg-gray-900/50 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl animate-entry w-full max-w-4xl"
+                className="relative z-10 flex flex-col gap-4 sm:gap-6 lg:gap-8 p-3 sm:p-5 lg:p-6 panel-modern rounded-2xl sm:rounded-3xl animate-entry w-full max-w-4xl"
                 style={{ animationDelay: '0.4s' }}
               >
                 <ContentInput 
