@@ -540,6 +540,9 @@ export const generateKeyTopics = async (
       chunkTokens: 280,
       includeHeadings: false,
     });
+    if (!documentsText || documentsText.trim().length < 40) {
+      throw new Error('The extracted study material appears to be empty or too short. Try re-uploading the file or selecting a Pro model for better OCR.');
+    }
 
     const prompt = `You are an AI tutor helping a ${gradeLevel}th grade student. 
 
@@ -630,6 +633,9 @@ export const generateInitialChatMessage = async (
       chunkTokens: 220,
       includeHeadings: false,
     });
+    if (!documentsText || documentsText.trim().length < 40) {
+      throw new Error('The extracted study material appears to be empty or too short. Try re-uploading the file or selecting a Pro model for better OCR.');
+    }
 
     const prompt = `You are a ${gradeLevel}th grade tutor. Welcome the student and describe what you can help them learn.
 
@@ -1152,7 +1158,11 @@ export const extractTextFromContent = async (
 ): Promise<string> => {
   // Always prefer the proxy so we use the user's saved API key on the server
   const sizeApprox = Math.floor((filePart.data?.length || 0) * 0.75); // base64 -> bytes approx
-  const modelName = getModelInfo(modelId)?.modelName || modelId;
+  let modelName = getModelInfo(modelId)?.modelName || modelId;
+  // Ensure a multimodal-capable model for PDFs/images
+  if ((/pdf|image\//i.test(filePart.mimeType)) && !/1\.5|pro/i.test(modelName)) {
+    modelName = 'gemini-1.5-pro';
+  }
 
   if (canUseProxy()) {
     const prompt = [
