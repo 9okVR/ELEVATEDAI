@@ -38,6 +38,7 @@ import { supabase } from './services/supabaseClient';
 import AIInfoModal from './components/AIInfoModal';
 import HistoryModal from './components/HistoryModal';
 import { getChatSession, createChatSession, addChatMessage, updateChatSession, saveFlashcardSet, saveQuiz } from './services/historyService';
+import { canUseProxy, getUserApiKey } from './services/proxyService';
 
 type DocumentStatus = 'ready' | 'processing' | 'error';
 type ActiveTab = 'topics' | 'chat' | 'flashcards' | 'quiz';
@@ -266,8 +267,8 @@ const AppContent: React.FC = () => {
                   content = await file.text();
               } else if (isComplexFile) {
                   const base64Data = await fileToBase64(file);
-                  // Use a specific model that supports file extraction
-                  content = await extractTextFromContent({ mimeType: fileType, data: base64Data }, 'gemini-2.5-flash');
+                  // Use the currently selected model for extraction (proxied with the user's saved key)
+                  content = await extractTextFromContent({ mimeType: fileType, data: base64Data }, selectedModel);
               } else {
                   console.warn(`Unsupported file type: ${fileType} for file ${file.name}, or current model does not support this type. Skipping.`);
                   setDocuments(prev => prev.filter(d => d.id !== placeholder.id));
@@ -311,6 +312,19 @@ const AppContent: React.FC = () => {
       setError("Please provide your study material.");
       return;
     }
+
+    // Enforce using the user's saved API key via the proxy to avoid demo fallbacks
+    try {
+      if (!canUseProxy()) {
+        setError('Cloud functions are not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY and sign in to use your saved Gemini API key.');
+        return;
+      }
+      const keyInfo = await getUserApiKey();
+      if (!keyInfo.ok || !keyInfo.hasKey) {
+        setError('No Gemini API key found for your account. Open Settings → Account to save your key, then try again.');
+        return;
+      }
+    } catch {}
 
     const isAdvancedModel = selectedModel === 'ai-advanced-analysis';
 
