@@ -137,8 +137,16 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
         onClick={onClose}
       />
       <div className={`absolute inset-0 flex items-center justify-center p-4`}>
-        <div className={`w-full max-w-lg bg-gray-900/95 border border-white/10 rounded-2xl shadow-xl backdrop-blur-xl transition-all duration-200 ${show ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
-          <div className="p-3 border-b border-white/10 flex items-center justify-between gap-2 flex-wrap">
+        <div className={`relative w-full max-w-lg bg-gray-900/95 border border-white/10 rounded-2xl shadow-xl backdrop-blur-xl transition-all duration-200 ${show ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
+          {/* Absolute close button for consistent alignment */}
+          <button
+            onClick={onClose}
+            className="absolute top-2.5 right-2.5 inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-400 hover:text-white hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+            aria-label="Close"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+          <div className="p-3 pr-12 border-b border-white/10 flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-lg font-semibold text-white">Chat History</h2>
               {sessions.length > 0 && (
@@ -230,9 +238,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, onSelectSe
                   Compact
                 </label>
               </div>
-              <button onClick={onClose} className="text-gray-400 hover:text-white" aria-label="Close">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 18L18 6M6 6l12 12"/></svg>
-              </button>
+              {/* Close button moved to absolute position above */}
             </div>
           </div>
           <div className="p-3 max-h-[60vh] overflow-y-auto overflow-x-hidden custom-scrollbar">
