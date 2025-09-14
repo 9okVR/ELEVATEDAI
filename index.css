@@ -572,6 +572,32 @@
   color: #f5f3ff;
 }
 
+/* Immersive dropzone with animated gradient border */
+.dropzone-immersive {
+  position: relative;
+  border-radius: 18px;
+  background: radial-gradient(120% 100% at 50% 0%, rgba(124,58,237,0.18), rgba(17,24,39,0.5) 50%, rgba(17,24,39,0.8));
+  border: 1px dashed rgba(168,85,247,0.35);
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  box-shadow: 0 18px 40px rgba(124,58,237,0.18), inset 0 0 60px rgba(79,70,229,0.12);
+}
+.dropzone-immersive:hover { transform: translateY(-1px); border-color: rgba(168,85,247,0.5); }
+.dropzone-immersive::before {
+  content: '';
+  position: absolute; inset: -2px; border-radius: 20px; pointer-events: none;
+  background: conic-gradient(from 0deg, rgba(124,58,237,0), rgba(124,58,237,0.35), rgba(236,72,153,0.25), rgba(124,58,237,0));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  padding: 2px; opacity: .55; filter: blur(4px);
+  animation: border-sweep 6s linear infinite;
+}
+@keyframes border-sweep { to { transform: rotate(360deg); } }
+
+/* Subtle fade-up for section entry */
+.fade-up { animation: fade-up 420ms ease both; }
+@keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
 /* Sleek send button */
 .ea-send-btn {
   position: relative;

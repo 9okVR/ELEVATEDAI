@@ -50,7 +50,7 @@ const GradeSelector: React.FC<GradeSelectorProps> = ({ selectedGrade, onSelectGr
             </svg>
           </div>
           <div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
+            <h2 className="panel-section-title text-xl font-bold">
               <span className="text-purple-400">2.</span> Select Your Grade Level
             </h2>
             <p className="text-purple-300/70 text-sm">Choose your academic level</p>

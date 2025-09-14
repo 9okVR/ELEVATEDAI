@@ -57,7 +57,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onSelectMo
                     </svg>
                 </div>
                 <div>
-                    <h3 className="text-lg font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
+                    <h3 className="panel-section-title text-lg font-bold">
                         AI Model Selection
                     </h3>
                     <p className="text-purple-300/70 text-sm">Choose your preferred AI model</p>
