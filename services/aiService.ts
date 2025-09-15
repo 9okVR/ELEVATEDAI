@@ -1340,4 +1340,78 @@ export const testGeminiConnection = async (): Promise<{ success: boolean; messag
 };
 
 
+// New features: Syllabus, Adaptive Quiz, Distractor Analysis (server-driven via proxy)
+export const generateSyllabus = async (
+  documents: StudyDocument[],
+  gradeLevel: GradeLevel,
+  modelId: string,
+  weeks: number = 8
+): Promise<{ ok: boolean; plan?: any; text?: string; error?: string }> => {
+  try {
+    if (!canUseProxy()) return { ok: false, error: 'Supabase not configured' };
+    const modelName = getModelInfo(modelId)?.modelName || modelId;
+    const context = buildDocumentsContext(documents, {
+      totalBudgetTokens: 6000,
+      perDocBudgetTokens: 1500,
+      chunkTokens: 280,
+      includeHeadings: true,
+    });
+    const prompt = `Using ONLY the following study materials, create a ${weeks}-week learning plan for a ${gradeLevel}th grade student. Each week must include: concise goals, key topics, readings (quote titles/headings from the materials), and practice activities derived from the materials. Return STRICT JSON with this exact shape: {"weeks":[{"week":number,"goals":string[],"topics":string[],"readings":string[],"practice":string[]}],"outcomes":string[],"prerequisites":string[]}. Do not include any text outside JSON.\n\nSTUDY MATERIALS:\n${context}`;
+
+    const resp = await proxyGenerate({ prompt, model: modelName, expectJson: true, action: 'syllabus', docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0) });
+    if (!resp.ok || !resp.text) return { ok: false, error: resp.error || 'Syllabus generation failed' };
+    try { return { ok: true, plan: JSON.parse(resp.text) }; } catch { return { ok: true, text: resp.text }; }
+  } catch (e) {
+    return { ok: false, error: (e as Error)?.message || String(e) };
+  }
+};
+
+export const generateAdaptiveQuizNew = async (
+  documents: StudyDocument[],
+  gradeLevel: GradeLevel,
+  modelId: string,
+  numQuestions: number = 10,
+  skillHistory?: Record<string, { correct: number; attempts: number }>
+): Promise<{ ok: boolean; questions?: any[]; text?: string; error?: string }> => {
+  try {
+    if (!canUseProxy()) return { ok: false, error: 'Supabase not configured' };
+    const modelName = getModelInfo(modelId)?.modelName || modelId;
+    const context = buildDocumentsContext(documents, {
+      totalBudgetTokens: 6000,
+      perDocBudgetTokens: 1500,
+      chunkTokens: 280,
+      includeHeadings: false,
+    });
+    const history = skillHistory ? JSON.stringify(skillHistory).slice(0, 2000) : '{}';
+    const prompt = `Create an adaptive multiple-choice quiz with exactly ${numQuestions} questions for a ${gradeLevel}th grade student based ONLY on the following materials. Each question must include: "question" (string), "options" (4 strings), "correctAnswer" (one of the options), "explanation" (why correct, grounded in the materials), "skills" (string[]), and "difficulty" ("easy"|"medium"|"hard"). Use this prior skill performance to adapt difficulty and coverage: ${history}. Return ONLY a JSON array of question objects.`;
+    const full = `${prompt}\n\nSTUDY MATERIALS:\n${context}`;
+    const resp = await proxyGenerate({ prompt: full, model: modelName, expectJson: true, action: 'quiz-adaptive', items: numQuestions, docBytes: documents.reduce((a, d) => a + (d.content?.length || 0), 0) });
+    if (!resp.ok || !resp.text) return { ok: false, error: resp.error || 'Adaptive quiz generation failed' };
+    try { return { ok: true, questions: JSON.parse(resp.text) }; } catch { return { ok: true, text: resp.text }; }
+  } catch (e) {
+    return { ok: false, error: (e as Error)?.message || String(e) };
+  }
+};
+
+export const analyzeDistractors = async (
+  questions: Array<{ question: string; options: string[]; correctAnswer: string; explanation?: string }>,
+  documents: StudyDocument[],
+  gradeLevel: GradeLevel,
+  modelId: string
+): Promise<{ ok: boolean; analyses?: any; text?: string; error?: string }> => {
+  try {
+    if (!canUseProxy()) return { ok: false, error: 'Supabase not configured' };
+    const modelName = getModelInfo(modelId)?.modelName || modelId;
+    const context = buildDocumentsContext(documents, { totalBudgetTokens: 4000, perDocBudgetTokens: 1200, chunkTokens: 240, includeHeadings: false });
+    const payload = JSON.stringify(questions).slice(0, 15000);
+    const prompt = `For each question below, analyze why each incorrect option is plausible and which misconception or skill gap it targets. Return STRICT JSON: {"analyses":[{"index":number,"option":string,"rationale":string,"misconceptionSkill":string}]} with one entry per wrong option. Ground rationales in THESE materials only.\n\nQUESTIONS:\n${payload}\n\nMATERIALS:\n${context}`;
+    const resp = await proxyGenerate({ prompt, model: modelName, expectJson: true, action: 'distractor-analysis' });
+    if (!resp.ok || !resp.text) return { ok: false, error: resp.error || 'Distractor analysis failed' };
+    try { return { ok: true, analyses: JSON.parse(resp.text) }; } catch { return { ok: true, text: resp.text }; }
+  } catch (e) {
+    return { ok: false, error: (e as Error)?.message || String(e) };
+  }
+};
+
+
 

@@ -52,7 +52,7 @@ export async function proxyGenerate(opts: {
   prompt: string;
   model: string;
   expectJson?: boolean;
-  action: 'topics' | 'flashcards' | 'quiz' | 'chat' | 'extract';
+  action: 'topics' | 'flashcards' | 'quiz' | 'chat' | 'extract' | 'analysis' | 'syllabus' | 'quiz-adaptive' | 'distractor-analysis';
   items?: number;
   docBytes?: number;
   doc?: { mimeType: string; data: string };
