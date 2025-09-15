@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.24.1";
+import { GoogleAIFileManager } from "https://esm.sh/@google/generative-ai@0.24.1/server";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -41,7 +42,34 @@ serve(async (req) => {
     // Build parts to support optional file (image/PDF) input
     const parts: any[] = [{ text: prompt }];
     if (doc && typeof doc === 'object' && typeof doc.mimeType === 'string' && typeof doc.data === 'string' && doc.data.length > 0) {
-      parts.push({ inlineData: { mimeType: doc.mimeType, data: doc.data } });
+      const isPdf = /pdf/i.test(doc.mimeType);
+      const isImage = /^image\//i.test(doc.mimeType);
+      if (isImage) {
+        // Images: inlineData works
+        parts.push({ inlineData: { mimeType: doc.mimeType, data: doc.data } });
+      } else if (isPdf) {
+        // PDFs: upload to the File API, then reference via fileData
+        try {
+          const fm = new GoogleAIFileManager(apiKey);
+          const bytes = Uint8Array.from(atob(doc.data), c => c.charCodeAt(0));
+          // Deno supports File/Blob
+          const file = new File([bytes], "upload.pdf", { type: doc.mimeType });
+          const up = await fm.uploadFile(file, { mimeType: doc.mimeType, displayName: "User PDF" } as any);
+          const fileUri = (up as any)?.file?.uri;
+          if (fileUri) {
+            parts.push({ fileData: { mimeType: doc.mimeType, fileUri } });
+          } else {
+            // Fallback to inlineData if upload fails to provide a URI
+            parts.push({ inlineData: { mimeType: doc.mimeType, data: doc.data } });
+          }
+        } catch {
+          // Graceful fallback to inlineData
+          parts.push({ inlineData: { mimeType: doc.mimeType, data: doc.data } });
+        }
+      } else {
+        // Other types: try inlineData
+        parts.push({ inlineData: { mimeType: doc.mimeType, data: doc.data } });
+      }
     }
 
     // Use structured contents call for consistency; add JSON MIME type when requested
