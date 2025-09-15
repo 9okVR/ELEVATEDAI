@@ -20,7 +20,7 @@ async function decrypt(b64: string) {
 serve(async (req) => {
   const authHeader = req.headers.get("Authorization") || "";
   try {
-    const { prompt, model = 'gemini-2.5-flash', expectJson = false, action, items, docBytes } = await req.json().catch(() => ({}));
+    const { prompt, model = 'gemini-2.5-flash', expectJson = false, action, items, docBytes, doc } = await req.json().catch(() => ({}));
     if (!prompt || !action) return new Response("Missing prompt/action", { status: 400 });
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { global: { headers: { Authorization: authHeader } } });
@@ -38,9 +38,21 @@ serve(async (req) => {
     const genai = new GoogleGenerativeAI(apiKey);
     const modelClient = genai.getGenerativeModel({ model, generationConfig: { temperature: 0.7, maxOutputTokens: 2048 } });
 
-    const payload = expectJson
-      ? { contents: [{ role: 'user', parts: [{ text: prompt }]}], generationConfig: { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: 'application/json' } }
-      : prompt;
+    // Build parts to support optional file (image/PDF) input
+    const parts: any[] = [{ text: prompt }];
+    if (doc && typeof doc === 'object' && typeof doc.mimeType === 'string' && typeof doc.data === 'string' && doc.data.length > 0) {
+      parts.push({ inlineData: { mimeType: doc.mimeType, data: doc.data } });
+    }
+
+    // Use structured contents call for consistency; add JSON MIME type when requested
+    const payload = {
+      contents: [{ role: 'user', parts }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+        ...(expectJson ? { responseMimeType: 'application/json' } : {})
+      }
+    } as const;
 
     const result = await modelClient.generateContent(payload as any);
     const text = result.response.text();
@@ -58,4 +70,3 @@ serve(async (req) => {
     return new Response('AI error', { status: 500 });
   }
 });
-

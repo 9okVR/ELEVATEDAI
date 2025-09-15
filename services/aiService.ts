@@ -1159,9 +1159,10 @@ export const extractTextFromContent = async (
   // Always prefer the proxy so we use the user's saved API key on the server
   const sizeApprox = Math.floor((filePart.data?.length || 0) * 0.75); // base64 -> bytes approx
   let modelName = getModelInfo(modelId)?.modelName || modelId;
-  // Ensure a multimodal-capable model for PDFs/images
-  if ((/pdf|image\//i.test(filePart.mimeType)) && !/1\.5|pro/i.test(modelName)) {
-    modelName = 'gemini-1.5-pro';
+  // Ensure a multimodal-capable model for PDFs/images. Allow 2.x (flash/pro) as multimodal too.
+  if ((/pdf|image\//i.test(filePart.mimeType)) && !/(1\.5|2\.0|2\.5|pro|flash)/i.test(modelName)) {
+    // Prefer current default multimodal model
+    modelName = 'gemini-2.5-flash';
   }
 
   if (canUseProxy()) {
