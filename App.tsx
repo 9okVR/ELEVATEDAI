@@ -679,6 +679,13 @@ const AppContent: React.FC = () => {
                   Import / Export
                 </button>
                 <button
+                  onClick={() => { setIsClassesModalOpen(true); setIsMobileMenuOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 20V7a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 5.27A2 2 0 0 0 3 7v13"/><path d="M16 12H8"/><path d="M16 16H8"/><path d="M8 20h8"/></svg>
+                  Classes
+                </button>
+                <button
                   onClick={() => { setIsExtractorModalOpen(true); setIsMobileMenuOpen(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-white/90 hover:bg-white/10"
                 >
@@ -741,6 +748,16 @@ const AppContent: React.FC = () => {
         title="History"
       >
         <svg className="w-6 h-6 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </button>
+
+      {/* Classes Button (mobile FAB) */}
+      <button
+        onClick={() => setIsClassesModalOpen(true)}
+        className="sm:hidden fixed bottom-4 right-3 z-50 p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
+        aria-label="Open classes"
+        title="Classes"
+      >
+        <svg className="w-6 h-6 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 20V7a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 5.27A2 2 0 0 0 3 7v13"/><path d="M16 12H8"/><path d="M16 16H8"/><path d="M8 20h8"/></svg>
       </button>
 
       {/* History Button (hidden on small screens) */}
