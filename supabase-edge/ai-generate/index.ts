@@ -50,7 +50,8 @@ serve(async (req) => {
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 2048,
-        ...(expectJson ? { responseMimeType: 'application/json' } : {})
+        ...(expectJson ? { responseMimeType: 'application/json' } : {}),
+        ...(action === 'extract' ? { responseMimeType: 'text/plain' } : {})
       }
     } as const;
 
