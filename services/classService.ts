@@ -12,7 +12,11 @@ export async function createClass(name: string): Promise<{ ok: boolean; cls?: Cl
     method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ name })
   });
-  if (!resp.ok) return { ok: false, error: `HTTP ${resp.status}` };
+  if (!resp.ok) {
+    let text = '';
+    try { text = await resp.text(); } catch {}
+    return { ok: false, error: text || `HTTP ${resp.status}` };
+  }
   const data = await resp.json().catch(() => null);
   if (!data?.ok) return { ok: false, error: 'Malformed response' };
   return { ok: true, cls: data.class };
@@ -26,7 +30,11 @@ export async function joinClass(join_code: string): Promise<{ ok: boolean; cls?:
     method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ join_code })
   });
-  if (!resp.ok) return { ok: false, error: `HTTP ${resp.status}` };
+  if (!resp.ok) {
+    let text = '';
+    try { text = await resp.text(); } catch {}
+    return { ok: false, error: text || `HTTP ${resp.status}` };
+  }
   const data = await resp.json().catch(() => null);
   if (!data?.ok) return { ok: false, error: 'Malformed response' };
   return { ok: true, cls: data.class };
@@ -52,4 +60,3 @@ export async function listMyClasses(): Promise<{ taught: ClassRecord[]; joined: 
   }
   return { taught, joined };
 }
-
