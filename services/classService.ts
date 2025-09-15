@@ -60,3 +60,27 @@ export async function listMyClasses(): Promise<{ taught: ClassRecord[]; joined: 
   }
   return { taught, joined };
 }
+
+export async function deleteClass(class_id: string): Promise<{ ok: boolean; error?: string }>{
+  if (!baseUrl) return { ok: false, error: 'Supabase not configured' };
+  const token = await getAccessToken();
+  if (!token) return { ok: false, error: 'Not authenticated' };
+  const resp = await fetch(`${baseUrl}/functions/v1/delete-class`, {
+    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ class_id })
+  });
+  if (!resp.ok) { let t=''; try{t=await resp.text();}catch{} return { ok:false, error: t || `HTTP ${resp.status}`}; }
+  return { ok: true };
+}
+
+export async function leaveClass(class_id: string): Promise<{ ok: boolean; error?: string }>{
+  if (!baseUrl) return { ok: false, error: 'Supabase not configured' };
+  const token = await getAccessToken();
+  if (!token) return { ok: false, error: 'Not authenticated' };
+  const resp = await fetch(`${baseUrl}/functions/v1/leave-class`, {
+    method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ class_id })
+  });
+  if (!resp.ok) { let t=''; try{t=await resp.text();}catch{} return { ok:false, error: t || `HTTP ${resp.status}`}; }
+  return { ok: true };
+}

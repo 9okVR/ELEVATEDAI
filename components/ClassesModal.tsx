@@ -125,7 +125,7 @@ const ClassesModal: React.FC<ClassesModalProps> = ({ isOpen, onClose }) => {
                           </div>
                           <div className="flex items-center gap-2">
                             <button onClick={()=>copy(c.join_code)} className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white/90 border border-white/15">Copy</button>
-                            <button disabled className="px-3 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white/90 opacity-60 cursor-not-allowed">Manage</button>
+                            <button onClick={async()=>{ if (!confirm('Delete this class? This cannot be undone.')) return; setBusy(true); try{ const res = await (await import('../services/classService')).deleteClass(c.id); setMsg(res.ok? 'Class deleted.' : res.error || 'Delete failed'); await refresh(); } finally { setBusy(false);} }} className="px-3 py-2 rounded-lg bg-red-600/80 hover:bg-red-600 text-white border border-red-400/30">Delete</button>
                           </div>
                         </div>
                       </GlowCard>
@@ -154,8 +154,8 @@ const ClassesModal: React.FC<ClassesModalProps> = ({ isOpen, onClose }) => {
                             <p className="text-white font-semibold truncate">{c.name}</p>
                             <p className="text-xs text-white/60">Enrolled</p>
                           </div>
-                          <div className="flex items-center gap-2 opacity-60">
-                            <button disabled className="px-3 py-2 rounded-lg bg-white/10 border border-white/15">Open</button>
+                          <div className="flex items-center gap-2">
+                            <button onClick={async()=>{ if (!confirm('Leave this class?')) return; setBusy(true); try{ const res = await (await import('../services/classService')).leaveClass(c.id); setMsg(res.ok? 'You left the class.' : res.error || 'Leave failed'); await refresh(); } finally { setBusy(false);} }} className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white border border-white/15">Leave</button>
                           </div>
                         </div>
                       </GlowCard>
