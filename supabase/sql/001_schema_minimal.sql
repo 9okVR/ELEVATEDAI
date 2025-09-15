@@ -64,6 +64,10 @@ create table if not exists classes (
 alter table classes enable row level security;
 create policy if not exists "classes teacher read" on classes for select using (teacher_id = auth.uid());
 create policy if not exists "classes teacher write" on classes for all using (teacher_id = auth.uid()) with check (teacher_id = auth.uid());
+-- Allow students to read classes they are a member of
+create policy if not exists "classes members read" on classes for select using (
+  exists (select 1 from class_members m where m.class_id = classes.id and m.user_id = auth.uid())
+);
 
 create table if not exists class_members (
   class_id uuid not null references classes(id) on delete cascade,
@@ -124,4 +128,3 @@ create policy if not exists "assignments write by teacher" on assignments for al
 create policy if not exists "quiz attempts teacher read" on quiz_attempts for select using (
   exists (select 1 from classes c where c.id = quiz_attempts.class_id and c.teacher_id = auth.uid())
 );
-

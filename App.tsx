@@ -36,6 +36,7 @@ import { useTheme } from './contexts/ThemeContext';
 import { useSettings } from './contexts/SettingsContext';
 import { supabase } from './services/supabaseClient';
 import AIInfoModal from './components/AIInfoModal';
+import ClassesModal from './components/ClassesModal';
 import HistoryModal from './components/HistoryModal';
 import { getChatSession, createChatSession, addChatMessage, updateChatSession, saveFlashcardSet, saveQuiz } from './services/historyService';
 import { canUseProxy, getUserApiKey } from './services/proxyService';
@@ -128,6 +129,7 @@ const AppContent: React.FC = () => {
   const [settingsInitialTab, setSettingsInitialTab] = useState<'appearance' | 'layout' | 'advanced' | 'account'>('appearance');
   const [isImportExportModalOpen, setIsImportExportModalOpen] = useState(false);
   const [isAIInfoModalOpen, setIsAIInfoModalOpen] = useState(false);
+  const [isClassesModalOpen, setIsClassesModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -711,6 +713,17 @@ const AppContent: React.FC = () => {
       </div>
 
       {/* Import/Export Button (hidden on small screens) */}
+      {/* Classes Button (hidden on small screens) */}
+      <button
+        onClick={() => setIsClassesModalOpen(true)}
+        className="hidden sm:flex fixed top-44 left-2 sm:left-4 z-30 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
+        aria-label="Open classes"
+        title="Classes"
+      >
+        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 20V7a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 5.27A2 2 0 0 0 3 7v13"/><path d="M16 12H8"/><path d="M16 16H8"/><path d="M8 20h8"/></svg>
+      </button>
+      
+      {/* Import/Export Button (hidden on small screens) */}
       <button
         onClick={() => setIsImportExportModalOpen(true)}
         className="hidden sm:flex fixed top-28 sm:top-28 left-2 sm:left-4 z-30 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
@@ -761,6 +774,7 @@ const AppContent: React.FC = () => {
         isOpen={isExtractorModalOpen}
         onClose={() => setIsExtractorModalOpen(false)}
       />
+      <ClassesModal isOpen={isClassesModalOpen} onClose={() => setIsClassesModalOpen(false)} />
        <CollaborationSettingsModal
         isOpen={isCollaborationModalOpen}
         onClose={() => setIsCollaborationModalOpen(false)}
