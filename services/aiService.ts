@@ -1169,9 +1169,10 @@ export const extractTextFromContent = async (
 
   if (canUseProxy()) {
     const prompt = [
-      'Extract the full readable text content from the attached file.',
-      'Preserve headings and paragraphs. Remove headers/footers/page numbers and OCR artifacts.',
-      'Return plain UTF-8 text only with sensible line breaks — no extra commentary.'
+      'Extract and ORGANIZE the readable text from the attached file.',
+      'Return clean Markdown that preserves structure: use #/##/### headings, bullet lists, and paragraphs.',
+      'Group by pages/slides separated with a line containing "---". Keep tables if obvious using Markdown tables.',
+      'Remove headers, footers, page numbers, and OCR artifacts. Do NOT add commentary, metadata, or code fences.'
     ].join(' ');
     const resp = await proxyGenerate({
       prompt,

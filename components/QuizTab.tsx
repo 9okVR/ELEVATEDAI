@@ -14,6 +14,8 @@ interface QuizTabProps {
   loadingMessage?: string;
   numQuestions: number;
   onNumQuestionsChange: (num: number) => void;
+  isAdaptive?: boolean;
+  onToggleAdaptive?: (v: boolean) => void;
 }
 
 const DonutChart: React.FC<{
@@ -129,7 +131,7 @@ const DonutChart: React.FC<{
 };
 
 
-const QuizTab: React.FC<QuizTabProps> = ({ quiz, isLoading, error, onGenerate, onAnalyze, loadingMessage, numQuestions, onNumQuestionsChange }) => {
+const QuizTab: React.FC<QuizTabProps> = ({ quiz, isLoading, error, onGenerate, onAnalyze, loadingMessage, numQuestions, onNumQuestionsChange, isAdaptive = false, onToggleAdaptive }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<number, string | null>>({});
   const [showResults, setShowResults] = useState(false);
@@ -259,6 +261,12 @@ const QuizTab: React.FC<QuizTabProps> = ({ quiz, isLoading, error, onGenerate, o
             options={[5, 10, 15, 20]}
             className="mt-6"
         />
+        <div className="mt-4 flex items-center justify-center gap-2 text-white/80">
+          <label className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-lg">
+            <input type="checkbox" checked={Boolean(isAdaptive)} onChange={(e) => onToggleAdaptive && onToggleAdaptive(e.target.checked)} />
+            Adaptive mode
+          </label>
+        </div>
          {error && (
             <div className="text-center bg-red-500/20 p-4 rounded-lg mt-8 border border-red-500/30">
               <p className="text-red-400 font-semibold">An Error Occurred</p>

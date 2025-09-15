@@ -12,7 +12,7 @@ import SettingsModal from './components/SettingsModal';
 import ImportExportModal from './components/ImportExportModal';
 import SettingsIcon from './components/icons/SettingsIcon';
 import DownloadIcon from './components/icons/DownloadIcon';
-import { generateInitialChatMessage, generateKeyTopics, sendMessage, SafetyError, generateFlashcards, generateQuiz, extractTextFromContent, getModelInfo, generateInitialChatMessageWithDeepThink, generateKeyTopicsWithDeepThink, analyzeQuizResults, sendMessageWithDeepThink } from './services/aiService';
+import { generateInitialChatMessage, generateKeyTopics, sendMessage, SafetyError, generateFlashcards, generateQuiz, extractTextFromContent, getModelInfo, generateInitialChatMessageWithDeepThink, generateKeyTopicsWithDeepThink, analyzeQuizResults, sendMessageWithDeepThink, generateAdaptiveQuizNew } from './services/aiService';
 import ElevatedAILogo from './components/icons/ElevatedAILogo';
 import Loader from './components/Loader';
 import MarkdownRenderer from './components/MarkdownRenderer';
@@ -110,6 +110,7 @@ const AppContent: React.FC = () => {
   const [numFlashcards, setNumFlashcards] = useState(10);
   const [quiz, setQuiz] = useState<QuizQuestion[]>([]);
   const [numQuizQuestions, setNumQuizQuestions] = useState(10);
+  const [isAdaptiveQuiz, setIsAdaptiveQuiz] = useState(false);
   const [isFlashcardsLoading, setIsFlashcardsLoading] = useState(false);
   const [flashcardLoadingMessage, setFlashcardLoadingMessage] = useState('');
   const [isQuizLoading, setIsQuizLoading] = useState(false);
@@ -496,7 +497,9 @@ const AppContent: React.FC = () => {
     setQuizLoadingMessage('Preparing to generate quiz...');
     try {
       const onProgress = (message: string) => setQuizLoadingMessage(message);
-      const generated = await generateQuiz(readyDocs, selectedGrade, selectedModel, onProgress, numQuizQuestions);
+      const generated = isAdaptiveQuiz
+        ? (await generateAdaptiveQuizNew(readyDocs, selectedGrade, selectedModel, numQuizQuestions)).questions || []
+        : await generateQuiz(readyDocs, selectedGrade, selectedModel, onProgress, numQuizQuestions);
       setQuiz(generated);
 
       // Save quiz and link to session
@@ -519,7 +522,7 @@ const AppContent: React.FC = () => {
       setIsQuizLoading(false);
       setQuizLoadingMessage('');
     }
-  }, [documents, selectedGrade, selectedModel, numQuizQuestions, currentSessionId]);
+  }, [documents, selectedGrade, selectedModel, numQuizQuestions, currentSessionId, isAdaptiveQuiz]);
 
   const { enableQuizFeedback } = useSettings();
 
@@ -997,6 +1000,8 @@ const AppContent: React.FC = () => {
                                   onAnalyze={handleQuizAnalysis}
                                   numQuestions={numQuizQuestions}
                                   onNumQuestionsChange={setNumQuizQuestions}
+                                  isAdaptive={isAdaptiveQuiz}
+                                  onToggleAdaptive={setIsAdaptiveQuiz}
                                />
                             )}
                         </div>
