@@ -5,6 +5,7 @@ import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 interface ClassesModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenClass?: (c: ClassRecord) => void;
 }
 
 const TabButton: React.FC<{ active: boolean; onClick: () => void; label: string; icon?: React.ReactNode }>=({ active, onClick, label, icon }) => (
@@ -124,6 +125,7 @@ const ClassesModal: React.FC<ClassesModalProps> = ({ isOpen, onClose }) => {
                             <p className="text-xs text-white/60">Join code: <span className="font-mono tracking-widest">{c.join_code}</span></p>
                           </div>
                           <div className="flex items-center gap-2">
+                            <button onClick={()=>{ onOpenClass && onOpenClass(c); onClose(); }} className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white border border-white/15">Open</button>
                             <button onClick={()=>copy(c.join_code)} className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white/90 border border-white/15">Copy</button>
                             <button onClick={async()=>{ if (!confirm('Delete this class? This cannot be undone.')) return; setBusy(true); try{ const res = await (await import('../services/classService')).deleteClass(c.id); setMsg(res.ok? 'Class deleted.' : res.error || 'Delete failed'); await refresh(); } finally { setBusy(false);} }} className="px-3 py-2 rounded-lg bg-red-600/80 hover:bg-red-600 text-white border border-red-400/30">Delete</button>
                           </div>
@@ -155,6 +157,7 @@ const ClassesModal: React.FC<ClassesModalProps> = ({ isOpen, onClose }) => {
                             <p className="text-xs text-white/60">Enrolled</p>
                           </div>
                           <div className="flex items-center gap-2">
+                            <button onClick={()=>{ onOpenClass && onOpenClass(c); onClose(); }} className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white border border-white/15">Open</button>
                             <button onClick={async()=>{ if (!confirm('Leave this class?')) return; setBusy(true); try{ const res = await (await import('../services/classService')).leaveClass(c.id); setMsg(res.ok? 'You left the class.' : res.error || 'Leave failed'); await refresh(); } finally { setBusy(false);} }} className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white border border-white/15">Leave</button>
                           </div>
                         </div>

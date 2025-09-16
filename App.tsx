@@ -37,6 +37,7 @@ import { useSettings } from './contexts/SettingsContext';
 import { supabase } from './services/supabaseClient';
 import AIInfoModal from './components/AIInfoModal';
 import ClassesModal from './components/ClassesModal';
+import ClassRoomModal from './components/ClassRoomModal';
 import HistoryModal from './components/HistoryModal';
 import { getChatSession, createChatSession, addChatMessage, updateChatSession, saveFlashcardSet, saveQuiz } from './services/historyService';
 import { canUseProxy, getUserApiKey } from './services/proxyService';
@@ -130,6 +131,7 @@ const AppContent: React.FC = () => {
   const [isImportExportModalOpen, setIsImportExportModalOpen] = useState(false);
   const [isAIInfoModalOpen, setIsAIInfoModalOpen] = useState(false);
   const [isClassesModalOpen, setIsClassesModalOpen] = useState(false);
+  const [activeClass, setActiveClass] = useState<{ id: string; name: string } | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -791,7 +793,10 @@ const AppContent: React.FC = () => {
         isOpen={isExtractorModalOpen}
         onClose={() => setIsExtractorModalOpen(false)}
       />
-      <ClassesModal isOpen={isClassesModalOpen} onClose={() => setIsClassesModalOpen(false)} />
+      <ClassesModal isOpen={isClassesModalOpen} onClose={() => setIsClassesModalOpen(false)} onOpenClass={(c)=> setActiveClass({ id: c.id, name: c.name })} />
+      {activeClass && (
+        <ClassRoomModal isOpen={true} onClose={()=> setActiveClass(null)} classId={activeClass.id} className={activeClass.name} />
+      )}
        <CollaborationSettingsModal
         isOpen={isCollaborationModalOpen}
         onClose={() => setIsCollaborationModalOpen(false)}
