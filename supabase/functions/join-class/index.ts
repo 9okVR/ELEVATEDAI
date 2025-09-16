@@ -20,15 +20,21 @@ serve(async (req) => {
 
   const authHeader = req.headers.get("Authorization") || "";
   let body: any = {}; try { body = await req.json(); } catch {}
-  const join_code = String(body?.join_code || '').trim().toUpperCase();
+  // Sanitize: remove spaces/dashes and normalize case
+  let join_code = String(body?.join_code || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
   if (!join_code) return bad(400, "Missing join_code");
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { global: { headers: { Authorization: authHeader } } });
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return bad(401, "Unauthorized");
 
-  const { data: cls } = await supabase.from('classes').select('id, name, join_code').eq('join_code', join_code).maybeSingle();
-  if (!cls) return bad(404, "Class not found");
+  let { data: cls } = await supabase.from('classes').select('id, name, join_code').eq('join_code', join_code).maybeSingle();
+  if (!cls) {
+    // Fallback case-insensitive match (handles any legacy lowercase codes)
+    const { data: alt } = await supabase.from('classes').select('id, name, join_code').ilike('join_code', join_code).maybeSingle();
+    cls = alt as any;
+  }
+  if (!cls) return bad(404, "Class not found. Double-check the code and try again.");
 
   // Upsert membership as student
   const { error } = await supabase
@@ -38,4 +44,3 @@ serve(async (req) => {
 
   return new Response(JSON.stringify({ ok: true, class: cls }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 });
-
