@@ -19,10 +19,14 @@ serve(async (req) => {
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return bad(500, "Missing SUPABASE_URL/SERVICE_ROLE_KEY");
 
   const authHeader = req.headers.get("Authorization") || "";
+  const url = new URL(req.url);
   let body: any = {}; try { body = await req.json(); } catch {}
-  // Sanitize: remove spaces/dashes and normalize case
-  let join_code = String(body?.join_code || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  // Accept join code from body or query (?code= / ?join_code=)
+  const rawCode = (body?.join_code ?? body?.code ?? url.searchParams.get('code') ?? url.searchParams.get('join_code') ?? '').toString();
+  // Sanitize: remove non-alphanumerics and normalize case
+  let join_code = rawCode.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
   if (!join_code) return bad(400, "Missing join_code");
+  if (join_code.length < 4 || join_code.length > 16) return bad(400, "Invalid join_code format");
 
   // Use one client with the user's auth header to read the session (auth.getUser),
   // and a second admin client WITHOUT the Authorization header to bypass RLS
@@ -32,19 +36,26 @@ serve(async (req) => {
   const { data: { user } } = await authed.auth.getUser();
   if (!user) return bad(401, "Unauthorized");
 
-  let { data: cls } = await admin.from('classes').select('id, name, join_code').eq('join_code', join_code).maybeSingle();
+  console.log('[join-class] sanitized code:', join_code);
+  let { data: cls, error: selErr } = await admin.from('classes').select('id, name, join_code').eq('join_code', join_code).maybeSingle();
   if (!cls) {
     // Fallback case-insensitive match (handles any legacy lowercase codes)
     const { data: alt } = await admin.from('classes').select('id, name, join_code').ilike('join_code', join_code).maybeSingle();
     cls = alt as any;
   }
-  if (!cls) return bad(404, "Class not found. Double-check the code and try again.");
+  if (!cls) {
+    console.warn('[join-class] class not found for code:', join_code, 'selectError:', selErr?.message);
+    return bad(404, "Class not found. Double-check the code and try again.");
+  }
 
   // Upsert membership as student
   const { error } = await admin
     .from('class_members')
     .upsert({ class_id: cls.id, user_id: user.id, role: 'student' }, { onConflict: 'class_id,user_id' });
-  if (error) return bad(500, `Join failed: ${error.message}`);
+  if (error) {
+    console.error('[join-class] upsert error:', error.message);
+    return bad(500, `Join failed: ${error.message}`);
+  }
 
   return new Response(JSON.stringify({ ok: true, class: cls }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 });
