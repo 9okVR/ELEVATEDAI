@@ -793,7 +793,11 @@ const AppContent: React.FC = () => {
         isOpen={isExtractorModalOpen}
         onClose={() => setIsExtractorModalOpen(false)}
       />
-      <ClassesModal isOpen={isClassesModalOpen} onClose={() => setIsClassesModalOpen(false)} onOpenClass={(c)=> setActiveClass({ id: c.id, name: c.name })} />
+      <ClassesModal
+        isOpen={isClassesModalOpen}
+        onClose={() => setIsClassesModalOpen(false)}
+        onOpenClass={(c)=> { try { setIsBetaModalOpen(false); } catch {} setActiveClass({ id: c.id, name: c.name }); }}
+      />
       {activeClass && (
         <ClassRoomModal isOpen={true} onClose={()=> setActiveClass(null)} classId={activeClass.id} className={activeClass.name} />
       )}

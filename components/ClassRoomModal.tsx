@@ -57,7 +57,7 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({ isOpen, onClose, classI
 
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-[75] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/60 backdrop-blur-xl" onClick={onClose} />
       <div className="relative w-full max-w-5xl rounded-2xl border border-white/15 bg-gray-900/95 overflow-hidden shadow-2xl">
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-gradient-to-r from-indigo-700/15 to-purple-700/15">
@@ -180,4 +180,3 @@ const Comments: React.FC<{ announcementId: number }> = ({ announcementId }) => {
 };
 
 export default ClassRoomModal;
-
