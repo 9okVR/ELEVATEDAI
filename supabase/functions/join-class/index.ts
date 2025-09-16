@@ -24,20 +24,24 @@ serve(async (req) => {
   let join_code = String(body?.join_code || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
   if (!join_code) return bad(400, "Missing join_code");
 
-  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { global: { headers: { Authorization: authHeader } } });
-  const { data: { user } } = await supabase.auth.getUser();
+  // Use one client with the user's auth header to read the session (auth.getUser),
+  // and a second admin client WITHOUT the Authorization header to bypass RLS
+  // for the class lookup + membership upsert (validated via join_code).
+  const authed = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { global: { headers: { Authorization: authHeader } } });
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+  const { data: { user } } = await authed.auth.getUser();
   if (!user) return bad(401, "Unauthorized");
 
-  let { data: cls } = await supabase.from('classes').select('id, name, join_code').eq('join_code', join_code).maybeSingle();
+  let { data: cls } = await admin.from('classes').select('id, name, join_code').eq('join_code', join_code).maybeSingle();
   if (!cls) {
     // Fallback case-insensitive match (handles any legacy lowercase codes)
-    const { data: alt } = await supabase.from('classes').select('id, name, join_code').ilike('join_code', join_code).maybeSingle();
+    const { data: alt } = await admin.from('classes').select('id, name, join_code').ilike('join_code', join_code).maybeSingle();
     cls = alt as any;
   }
   if (!cls) return bad(404, "Class not found. Double-check the code and try again.");
 
   // Upsert membership as student
-  const { error } = await supabase
+  const { error } = await admin
     .from('class_members')
     .upsert({ class_id: cls.id, user_id: user.id, role: 'student' }, { onConflict: 'class_id,user_id' });
   if (error) return bad(500, `Join failed: ${error.message}`);
