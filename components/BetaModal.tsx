@@ -448,3 +448,4 @@ const BetaModal: React.FC<BetaModalProps> = ({ isOpen, onClose }) => {
 };
 
 export default BetaModal;
+
