@@ -22,7 +22,7 @@ const ThemeToggle: React.FC = () => {
           {/* Version Indicator */}
           <div className="w-px h-3 bg-purple-400/40"></div>
           <span className="text-xs font-medium text-purple-300/80 tracking-wider">
-            v2.5
+            v3.0.1
           </span>
         </div>
         
