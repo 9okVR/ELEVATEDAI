@@ -610,7 +610,7 @@ const AppContent: React.FC = () => {
       {/* Settings Button (hidden on small screens; provided via mobile header) */}
           <button
             onClick={() => setIsSettingsModalOpen(true)}
-            className="hidden sm:flex fixed top-2 sm:top-4 left-2 sm:left-4 z-30 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
+            className="hidden sm:flex fixed top-2 sm:top-4 left-2 sm:left-4 z-50 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
             aria-label="Open settings"
             title="Customize Interface"
           >
@@ -725,7 +725,7 @@ const AppContent: React.FC = () => {
       {/* Classes Button (hidden on small screens) */}
       <button
         onClick={() => setIsClassesModalOpen(true)}
-        className="hidden sm:flex fixed top-44 left-2 sm:left-4 z-30 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
+        className="hidden sm:flex fixed top-44 left-2 sm:left-4 z-50 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
         aria-label="Open classes"
         title="Classes"
       >
@@ -735,7 +735,7 @@ const AppContent: React.FC = () => {
       {/* Import/Export Button (hidden on small screens) */}
       <button
         onClick={() => setIsImportExportModalOpen(true)}
-        className="hidden sm:flex fixed top-28 sm:top-28 left-2 sm:left-4 z-30 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
+        className="hidden sm:flex fixed top-28 sm:top-28 left-2 sm:left-4 z-50 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
         aria-label="Import/Export data"
         title="Import & Export"
       >
@@ -765,7 +765,7 @@ const AppContent: React.FC = () => {
       {/* History Button (hidden on small screens) */}
       <button
         onClick={() => setIsHistoryModalOpen(true)}
-        className="hidden sm:flex fixed top-28 sm:top-28 right-2 sm:right-4 z-30 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
+        className="hidden sm:flex fixed top-28 sm:top-28 right-2 sm:right-4 z-50 p-2 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-purple-500/50 min-h-[44px] min-w-[44px] items-center justify-center"
         aria-label="Open chat history"
         title="History"
       >
@@ -839,7 +839,7 @@ const AppContent: React.FC = () => {
       {/* Extractor CTA (hidden on small screens) */}
       <button
           onClick={() => setIsExtractorModalOpen(true)}
-          className="hidden sm:block group fixed bottom-4 sm:bottom-8 left-2 sm:left-4 lg:left-8 z-30 p-3 sm:p-4 bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-700 text-white rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-500/50 animate-entry border border-purple-500/20 min-h-[44px] min-w-[44px]"
+          className="hidden sm:block group fixed bottom-4 sm:bottom-8 left-2 sm:left-4 lg:left-8 z-50 p-3 sm:p-4 bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-700 text-white rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-500/50 animate-entry border border-purple-500/20 min-h-[44px] min-w-[44px]"
           style={{ animationDelay: '1s' }}
           aria-label="Extract text from PDF with AI"
           title="AI PDF Analyzer - Extract text from any PDF"

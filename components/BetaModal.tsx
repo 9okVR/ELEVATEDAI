@@ -120,8 +120,10 @@ const BetaModal: React.FC<BetaModalProps> = ({ isOpen, onClose }) => {
   }
 
   const modalStyle: React.CSSProperties = {
-    maxWidth: 'min(92vw, 680px)',
-    maxHeight: 'min(90vh, 720px)',
+    // Use logical properties for better writing‑mode support and to satisfy linters
+    maxInlineSize: 'min(92vw, 680px)',
+    // Prefer dvh where supported; 'vh' remains a broadly compatible fallback via CSS cascade from container sizing
+    maxBlockSize: 'min(90dvh, 720px)',
     transform: `perspective(1000px) rotateX(${isHovering ? '2deg' : '0deg'}) rotateY(${isHovering ? '1deg' : '0deg'})`
   };
 
@@ -301,4 +303,3 @@ const BetaModal: React.FC<BetaModalProps> = ({ isOpen, onClose }) => {
 };
 
 export default BetaModal;
-
