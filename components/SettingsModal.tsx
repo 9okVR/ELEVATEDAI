@@ -271,7 +271,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
                 value={apiKeyInput}
                 onChange={(e) => setApiKeyInput(e.target.value)}
                 placeholder="Enter your Gemini API key"
-                className="flex-1 rounded-2xl border border-white/15 bg-white/8 px-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                className={`flex-1 rounded-2xl border px-4 py-3 text-sm font-mono tracking-[0.35em] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 ${apiKeyVisible ? 'border-white/25 bg-slate-900/70 text-white/90' : 'border-white/10 bg-[rgba(8,8,15,0.92)] text-white/70'}`}
               />
               <div className="flex items-center gap-2">
                 <button
@@ -366,7 +366,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
           </nav>
 
           <main className="relative flex-1 overflow-hidden">
-            <div className="h-full overflow-y-auto custom-scrollbar px-4 py-6 sm:px-6">
+            <div className="h-full overflow-y-auto custom-scrollbar px-4 py-6 sm:px-6" style={{ WebkitOverflowScrolling: "touch" }}>
               {renderTabContent()}
             </div>
           </main>
@@ -385,3 +385,5 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialT
 };
 
 export default SettingsModal;
+
+
