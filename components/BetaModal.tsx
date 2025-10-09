@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import ElevatedAILogo from './icons/ElevatedAILogo';
 
 interface BetaModalProps {
   isOpen: boolean;
@@ -199,117 +200,14 @@ const BetaModal: React.FC<BetaModalProps> = ({ isOpen, onClose }) => {
 
         {/* Content Container */}
         <div className="relative p-4 sm:p-6 lg:p-10 text-center">
-          {/* Enhanced Beta Logo with 3D effects */}
-          <div className="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 mx-auto mb-6 sm:mb-8 relative group">
-            {/* Logo shadow/depth */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-pink-500/30 blur-2xl scale-110 rounded-full" />
-            
-            {/* Main logo container */}
-            <div className={`relative w-full h-full transition-transform duration-300 ${
-              isHovering ? 'scale-110 rotate-2' : 'scale-100 rotate-0'
-            }`}>
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className="w-full h-full drop-shadow-2xl"
-                viewBox="0 0 120 120" 
-                fill="none"
-              >
-                {/* Enhanced Gradient Definitions */}
-                <defs>
-                  {/* Holographic primary gradient */}
-                  <linearGradient id="betaPrimaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#7c3aed" />
-                    <stop offset="25%" stopColor="#06b6d4" />
-                    <stop offset="50%" stopColor="#4f46e5" />
-                    <stop offset="75%" stopColor="#ec4899" />
-                    <stop offset="100%" stopColor="#8b5cf6" />
-                  </linearGradient>
-                  
-                  {/* Dynamic secondary gradient */}
-                  <linearGradient id="betaSecondaryGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#60a5fa" />
-                    <stop offset="50%" stopColor="#7c3aed" />
-                    <stop offset="100%" stopColor="#ec4899" />
-                  </linearGradient>
-                  
-                  {/* Radial energy core */}
-                  <radialGradient id="betaCoreGradient" cx="50%" cy="50%" r="60%">
-                    <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-                    <stop offset="30%" stopColor="#60a5fa" stopOpacity="0.9" />
-                    <stop offset="70%" stopColor="#7c3aed" stopOpacity="0.8" />
-                    <stop offset="100%" stopColor="#1e1b4b" stopOpacity="0.4" />
-                  </radialGradient>
-                  
-                  {/* Enhanced glow filter */}
-                  <filter id="betaGlow" x="-100%" y="-100%" width="300%" height="300%">
-                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                    <feOffset dx="0" dy="0" result="offsetBlur"/>
-                    <feFlood floodColor="#7c3aed" floodOpacity="0.6"/>
-                    <feComposite in2="offsetBlur" operator="in"/>
-                    <feMerge> 
-                      <feMergeNode/>
-                      <feMergeNode in="SourceGraphic"/> 
-                    </feMerge>
-                  </filter>
-                  
-                  {/* 3D emboss effect */}
-                  <filter id="betaEmboss" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
-                    <feOffset dx="3" dy="3" result="offset1"/>
-                    <feOffset dx="-2" dy="-2" result="offset2"/>
-                    <feMerge>
-                      <feMergeNode in="offset1"/>
-                      <feMergeNode in="offset2"/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
-                </defs>
-
-                {/* Outer glow ring */}
-                <circle cx="60" cy="60" r="56" stroke="url(#betaSecondaryGradient)" strokeWidth="2" opacity="0.5" filter="url(#betaGlow)" />
-                
-                {/* Inner gradient circle */}
-                <circle cx="60" cy="60" r="48" fill="url(#betaCoreGradient)" opacity="0.8" />
-                
-                {/* Central B symbol with holographic gradient */}
-                <path
-                  d="M45 35h18c11 0 18 6 18 16 0 7-4 12-10 14 7 2 12 7 12 15 0 10-7 17-19 17H45V35zm18 26c5 0 8-3 8-8 0-5-3-8-8-8h-8v16h8zm1 28c6 0 9-3 9-9s-3-9-9-9h-9v18h9z"
-                  fill="url(#betaPrimaryGradient)"
-                  filter="url(#betaEmboss)"
-                />
-                
-                {/* Floating particles for subtle animation */}
-                <circle cx="90" cy="28" r="4" fill="url(#betaSecondaryGradient)">
-                  <animate attributeName="r" values="3;5;3" dur="6s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.6;1;0.6" dur="6s" repeatCount="indefinite" />
-                </circle>
-                <circle cx="26" cy="86" r="3" fill="url(#betaSecondaryGradient)">
-                  <animate attributeName="r" values="2;4;2" dur="5s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.4;0.9;0.4" dur="5s" repeatCount="indefinite" />
-                </circle>
-                <circle cx="100" cy="70" r="2" fill="url(#betaSecondaryGradient)">
-                  <animate attributeName="r" values="2;3;2" dur="7s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.6;0.8;0.6" dur="7s" repeatCount="indefinite" />
-                </circle>
-                
-                {/* Rotating orbital rings */}
-                <circle cx="60" cy="60" r="40" stroke="url(#betaSecondaryGradient)" strokeWidth="1.5" strokeDasharray="6 12" opacity="0.6">
-                  <animateTransform attributeName="transform" type="rotate" from="0 60 60" to="360 60 60" dur="20s" repeatCount="indefinite" />
-                </circle>
-                <circle cx="60" cy="60" r="32" stroke="url(#betaSecondaryGradient)" strokeWidth="1" strokeDasharray="4 8" opacity="0.4">
-                  <animateTransform attributeName="transform" type="rotate" from="360 60 60" to="0 60 60" dur="14s" repeatCount="indefinite" />
-                </circle>
-                
-                {/* Inner pulse */}
-                <circle cx="60" cy="60" r="22" stroke="url(#betaSecondaryGradient)" strokeWidth="1" opacity="0.5">
-                  <animate attributeName="r" values="20;35;20" dur="5s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.5;0;0.5" dur="5s" repeatCount="indefinite" />
-                </circle>
-              </svg>
+          {/* Brand Logo - crisp and consistent */}
+          <div className="mx-auto mb-6 sm:mb-8 w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 relative">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500/25 to-pink-500/20 blur-2xl opacity-70" />
+            <div className="absolute inset-0 rounded-full ring-1 ring-white/20" />
+            <div className="absolute inset-2 rounded-full bg-white/5" />
+            <div className="relative w-full h-full flex items-center justify-center">
+              <ElevatedAILogo className="w-14 h-14 sm:w-16 sm:h-16" showText={false} />
             </div>
-            
-            {/* Enhanced glow effect around logo */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 blur-xl animate-pulse" />
           </div>
           
           {/* Enhanced Title Section */}
@@ -403,5 +301,4 @@ const BetaModal: React.FC<BetaModalProps> = ({ isOpen, onClose }) => {
 };
 
 export default BetaModal;
-
 
