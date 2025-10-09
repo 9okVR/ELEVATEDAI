@@ -118,10 +118,16 @@ const BetaModal: React.FC<BetaModalProps> = ({ isOpen, onClose }) => {
     return null;
   }
 
+  const modalStyle: React.CSSProperties = {
+    maxWidth: 'min(92vw, 680px)',
+    maxHeight: 'min(90vh, 720px)',
+    transform: `perspective(1000px) rotateX(${isHovering ? '2deg' : '0deg'}) rotateY(${isHovering ? '1deg' : '0deg'})`
+  };
+
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 pt-safe pb-safe overscroll-contain transition-all duration-500 ease-out ${
+      className={`fixed inset-0 z-50 flex justify-center items-start sm:items-center overflow-y-auto p-4 pt-safe pb-safe overscroll-contain transition-all duration-500 ease-out ${
         show ? 'opacity-100' : 'opacity-0'
       }`}
       aria-labelledby="modal-title"
@@ -162,14 +168,12 @@ const BetaModal: React.FC<BetaModalProps> = ({ isOpen, onClose }) => {
       <div
         ref={modalRef}
         tabIndex={-1}
-        className={`relative w-full max-w-xs sm:max-w-md lg:max-w-lg transform transition-all duration-500 ease-out focus:outline-none ${
+        className={`relative w-full rounded-3xl overflow-y-auto transform transition-all duration-500 ease-out focus:outline-none ${
           show ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8'
         }`}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
-        style={{
-          transform: `perspective(1000px) rotateX(${isHovering ? '2deg' : '0deg'}) rotateY(${isHovering ? '1deg' : '0deg'})`
-        }}
+        style={modalStyle}
       >
         {/* Multi-layer glassmorphism background */}
         <div className="absolute inset-0 rounded-3xl overflow-hidden">
@@ -259,94 +263,45 @@ const BetaModal: React.FC<BetaModalProps> = ({ isOpen, onClose }) => {
                       <feMergeNode in="SourceGraphic"/>
                     </feMerge>
                   </filter>
-                  
-                  {/* Holographic prism effect */}
-                  <filter id="betaPrism">
-                    <feColorMatrix type="matrix" values="
-                      1.3 0 0.2 0 0
-                      0.1 1.2 0.3 0 0
-                      0.2 0.1 1.4 0 0
-                      0 0 0 1 0
-                    "/>
-                  </filter>
                 </defs>
+
+                {/* Outer glow ring */}
+                <circle cx="60" cy="60" r="56" stroke="url(#betaSecondaryGradient)" strokeWidth="2" opacity="0.5" filter="url(#betaGlow)" />
                 
-                {/* 3D Depth Shadow */}
-                <ellipse cx="60" cy="75" rx="50" ry="10" fill="url(#betaCoreGradient)" opacity="0.3" />
+                {/* Inner gradient circle */}
+                <circle cx="60" cy="60" r="48" fill="url(#betaCoreGradient)" opacity="0.8" />
                 
-                {/* Outer Energy Rings */}
-                <circle cx="60" cy="60" r="55" fill="none" stroke="url(#betaPrimaryGradient)" strokeWidth="1" opacity="0.4">
-                  <animate attributeName="r" values="55;58;55" dur="8s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.4;0.8;0.4" dur="8s" repeatCount="indefinite" />
-                </circle>
+                {/* Central B symbol with holographic gradient */}
+                <path
+                  d="M45 35h18c11 0 18 6 18 16 0 7-4 12-10 14 7 2 12 7 12 15 0 10-7 17-19 17H45V35zm18 26c5 0 8-3 8-8 0-5-3-8-8-8h-8v16h8zm1 28c6 0 9-3 9-9s-3-9-9-9h-9v18h9z"
+                  fill="url(#betaPrimaryGradient)"
+                  filter="url(#betaEmboss)"
+                />
                 
-                <circle cx="60" cy="60" r="48" fill="none" stroke="url(#betaSecondaryGradient)" strokeWidth="0.8" opacity="0.6">
-                  <animate attributeName="stroke-dasharray" values="0 300;150 150;0 300" dur="6s" repeatCount="indefinite" />
+                {/* Floating particles for subtle animation */}
+                <circle cx="90" cy="28" r="4" fill="url(#betaSecondaryGradient)">
+                  <animate attributeName="r" values="3;5;3" dur="6s" repeatCount="indefinite" />
                   <animate attributeName="opacity" values="0.6;1;0.6" dur="6s" repeatCount="indefinite" />
                 </circle>
+                <circle cx="26" cy="86" r="3" fill="url(#betaSecondaryGradient)">
+                  <animate attributeName="r" values="2;4;2" dur="5s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.4;0.9;0.4" dur="5s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="100" cy="70" r="2" fill="url(#betaSecondaryGradient)">
+                  <animate attributeName="r" values="2;3;2" dur="7s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.6;0.8;0.6" dur="7s" repeatCount="indefinite" />
+                </circle>
                 
-                {/* Advanced Hexagonal Core Structure */}
-                <g filter="url(#betaGlow)">
-                  {/* Main hexagonal chamber */}
-                  <path 
-                    d="M60 25 L90 40 L90 70 L60 85 L30 70 L30 40 Z" 
-                    fill="url(#betaCoreGradient)" 
-                    stroke="url(#betaPrimaryGradient)"
-                    strokeWidth="2"
-                    opacity="0.9"
-                    filter="url(#betaEmboss)"
-                  >
-                    <animateTransform
-                      attributeName="transform"
-                      type="rotate"
-                      values="0 60 60;2 60 60;0 60 60"
-                      dur="10s"
-                      repeatCount="indefinite"
-                    />
-                  </path>
-                  
-                  {/* Inner geometric layers */}
-                  <polygon 
-                    points="40,45 80,45 80,65 60,80 40,65" 
-                    fill="url(#betaSecondaryGradient)" 
-                    opacity="0.8"
-                    filter="url(#betaPrism)"
-                  >
-                    <animateTransform
-                      attributeName="transform"
-                      type="rotate"
-                      values="0 60 55;-3 60 55;0 60 55"
-                      dur="8s"
-                      repeatCount="indefinite"
-                    />
-                  </polygon>
-                  
-                  {/* Central energy core */}
-                  <circle cx="60" cy="55" r="15" fill="url(#betaCoreGradient)" filter="url(#betaPrism)">
-                    <animate attributeName="r" values="15;18;15" dur="4s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0.9;1;0.9" dur="4s" repeatCount="indefinite" />
-                  </circle>
-                </g>
+                {/* Rotating orbital rings */}
+                <circle cx="60" cy="60" r="40" stroke="url(#betaSecondaryGradient)" strokeWidth="1.5" strokeDasharray="6 12" opacity="0.6">
+                  <animateTransform attributeName="transform" type="rotate" from="0 60 60" to="360 60 60" dur="20s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="60" cy="60" r="32" stroke="url(#betaSecondaryGradient)" strokeWidth="1" strokeDasharray="4 8" opacity="0.4">
+                  <animateTransform attributeName="transform" type="rotate" from="360 60 60" to="0 60 60" dur="14s" repeatCount="indefinite" />
+                </circle>
                 
-                {/* Beta Symbol with Enhanced Design */}
-                <g transform="translate(60, 55)">
-                  <circle r="10" fill="url(#betaCoreGradient)" opacity="0.3" />
-                  <text 
-                    x="0" 
-                    y="7" 
-                    textAnchor="middle" 
-                    fontSize="24" 
-                    fontWeight="bold" 
-                    fill="url(#betaPrimaryGradient)"
-                    className="select-none"
-                    filter="url(#betaGlow)"
-                  >
-                    β
-                  </text>
-                </g>
-                
-                {/* Concentric Energy Pulses */}
-                <circle cx="60" cy="55" r="20" fill="none" stroke="url(#betaSecondaryGradient)" strokeWidth="1" opacity="0.5">
+                {/* Inner pulse */}
+                <circle cx="60" cy="60" r="22" stroke="url(#betaSecondaryGradient)" strokeWidth="1" opacity="0.5">
                   <animate attributeName="r" values="20;35;20" dur="5s" repeatCount="indefinite" />
                   <animate attributeName="opacity" values="0.5;0;0.5" dur="5s" repeatCount="indefinite" />
                 </circle>
@@ -448,4 +403,5 @@ const BetaModal: React.FC<BetaModalProps> = ({ isOpen, onClose }) => {
 };
 
 export default BetaModal;
+
 
