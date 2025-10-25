@@ -3,6 +3,23 @@
 import type { GradeLevel, WebSource, Message, StudyDocument, Flashcard, QuizQuestion, AiModel } from '../types';
 import { canUseProxy, proxyGenerate } from './proxyService';
 import { AI_MODELS } from "../constants";
+import { getAccessToken } from './supabaseClient';
+
+const PUBLIC_API_USE_KEY = 'public-api-uses';
+const PUBLIC_API_MAX_USES = 10;
+
+function getPublicApiUses(): number {
+  if (typeof localStorage === 'undefined') return 0;
+  const val = localStorage.getItem(PUBLIC_API_USE_KEY);
+  return val ? parseInt(val, 10) || 0 : 0;
+}
+
+function incrementPublicApiUses(): number {
+  if (typeof localStorage === 'undefined') return 0;
+  const uses = getPublicApiUses() + 1;
+  localStorage.setItem(PUBLIC_API_USE_KEY, uses.toString());
+  return uses;
+}
 
 // --- Token-aware chunking utilities (approximate) ---
 const approxTokenCount = (text: string): number => Math.ceil(((text || '').trim().length) / 4);
@@ -253,6 +270,18 @@ const callGeminiAPI = async (
   responseMimeType?: string
 ): Promise<{ text: string; sources: WebSource[] | null }> => {
   console.log('🔄 Starting callGeminiAPI...');
+
+  const token = await getAccessToken();
+  if (!token) {
+    const uses = getPublicApiUses();
+    if (uses >= PUBLIC_API_MAX_USES) {
+      return {
+        text: `# 🔒 Public API limit reached\n\nYou've used the shared Gemini key ${PUBLIC_API_MAX_USES} times.\n\nPlease log in and provide your own API key to continue.`,
+        sources: null
+      };
+    }
+    incrementPublicApiUses();
+  }
   
   if (!geminiClient) {
     console.log('🔄 No client, initializing...');
